@@ -1,30 +1,36 @@
-<?php get_header(); ?>
+<?php
+/**
+ * Template Name: Map
+ */
+get_header();
+$is_sv = 'sv' === COS_Language_Routing::current_lang();
+?>
 
 <div class="map-page">
 	<aside class="map-filters">
 		<label>
-			<?php esc_html_e( 'Search', 'cos-theme' ); ?>
-			<input type="text" id="cos-map-search" placeholder="<?php esc_attr_e( 'Search by name', 'cos-theme' ); ?>">
+			<?php echo esc_html( $is_sv ? 'Sök' : 'Search' ); ?>
+			<input type="text" id="cos-map-search" placeholder="<?php echo esc_attr( $is_sv ? 'Sök efter namn' : 'Search by name' ); ?>">
 		</label>
 		<label>
-			<?php esc_html_e( 'Region', 'cos-theme' ); ?>
-			<select id="cos-map-region"><option value=""><?php esc_html_e( 'All regions', 'cos-theme' ); ?></option></select>
+			<?php echo esc_html( $is_sv ? 'Landskap' : 'Region' ); ?>
+			<select id="cos-map-region"><option value=""><?php echo esc_html( $is_sv ? 'Alla landskap' : 'All regions' ); ?></option></select>
 		</label>
 		<label>
-			<?php esc_html_e( 'Building Type', 'cos-theme' ); ?>
-			<select id="cos-map-type"><option value=""><?php esc_html_e( 'All types', 'cos-theme' ); ?></option></select>
+			<?php echo esc_html( $is_sv ? 'Byggnadstyp' : 'Building Type' ); ?>
+			<select id="cos-map-type"><option value=""><?php echo esc_html( $is_sv ? 'Alla typer' : 'All types' ); ?></option></select>
 		</label>
 		<div class="map-filters__group">
-			<span class="map-filters__group-label"><?php esc_html_e( 'Category', 'cos-theme' ); ?></span>
+			<span class="map-filters__group-label"><?php echo esc_html( $is_sv ? 'Kategori' : 'Category' ); ?></span>
 			<div id="cos-map-category" class="map-filters__checkbox-group"></div>
 		</div>
 		<label>
-			<?php esc_html_e( 'Architectural Style', 'cos-theme' ); ?>
-			<select id="cos-map-style"><option value=""><?php esc_html_e( 'All styles', 'cos-theme' ); ?></option></select>
+			<?php echo esc_html( $is_sv ? 'Arkitektonisk stil' : 'Architectural Style' ); ?>
+			<select id="cos-map-style"><option value=""><?php echo esc_html( $is_sv ? 'Alla stilar' : 'All styles' ); ?></option></select>
 		</label>
 		<label>
-			<?php esc_html_e( 'Era', 'cos-theme' ); ?>
-			<select id="cos-map-era"><option value=""><?php esc_html_e( 'All eras', 'cos-theme' ); ?></option></select>
+			<?php echo esc_html( $is_sv ? 'Epok' : 'Era' ); ?>
+			<select id="cos-map-era"><option value=""><?php echo esc_html( $is_sv ? 'Alla epoker' : 'All eras' ); ?></option></select>
 		</label>
 		<p id="cos-map-count" class="card__meta"></p>
 	</aside>

@@ -1,5 +1,6 @@
 <?php
 get_header();
+$is_sv           = 'sv' === COS_Language_Routing::current_lang();
 $cos_term        = get_queried_object();
 $cos_description = term_description();
 ?>
@@ -25,7 +26,7 @@ $cos_description = term_description();
 		</div>
 		<?php the_posts_pagination(); ?>
 	<?php else : ?>
-		<p><?php esc_html_e( 'No buildings found.', 'cos-theme' ); ?></p>
+		<p><?php echo esc_html( $is_sv ? 'Inga byggnader hittades.' : 'No buildings found.' ); ?></p>
 	<?php endif; ?>
 </div>
 

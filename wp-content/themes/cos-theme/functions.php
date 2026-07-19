@@ -22,16 +22,37 @@ add_action( 'pre_get_posts', 'cos_taxonomy_archive_query' );
  * Fixed brand-level primary navigation.
  * Homepage is reached via the clickable logo, not a nav item.
  */
+/**
+ * Returns [ 'label' => ..., 'url' => ..., 'cta' => bool ] rows rather than a
+ * flat label => url map, so the "Support us" CTA button styling doesn't
+ * depend on string-matching a label that's now translated per language.
+ */
 function cos_primary_nav_links() {
+	$is_sv = 'sv' === COS_Language_Routing::current_lang();
+
 	return array(
-		'Visit'             => home_url( '/visit/' ),
-		'Map'               => home_url( '/map/' ),
-		'For Sale'          => home_url( '/for-sale/' ),
-		'The Journal'       => home_url( '/journal/' ),
-		'Shop'              => home_url( '/shop/' ),
-		'Support us'        => home_url( '/support-us/' ),
+		array( 'label' => $is_sv ? 'Destinationer' : 'Visit', 'url' => home_url( $is_sv ? '/sv/besok/' : '/visit/' ) ),
+		array( 'label' => $is_sv ? 'Karta' : 'Map', 'url' => home_url( $is_sv ? '/sv/karta/' : '/map/' ) ),
+		array( 'label' => $is_sv ? 'Till salu' : 'For Sale', 'url' => home_url( $is_sv ? '/sv/till-salu/' : '/for-sale/' ) ),
+		array( 'label' => $is_sv ? 'Magasinet' : 'The Journal', 'url' => home_url( $is_sv ? '/sv/magasinet/' : '/journal/' ) ),
+		array( 'label' => $is_sv ? 'Butik' : 'Shop', 'url' => home_url( $is_sv ? '/sv/butik/' : '/shop/' ) ),
+		array( 'label' => $is_sv ? 'Stöd oss' : 'Support us', 'url' => home_url( $is_sv ? '/sv/stod-oss/' : '/support-us/' ), 'cta' => true ),
 	);
 }
+
+/**
+ * the_custom_logo() always links to home_url( '/' ) with no built-in way to
+ * change that — this keeps it pointing at the Swedish homepage while
+ * browsing /sv/, matching every other nav link. No custom logo is uploaded
+ * yet (the theme falls back to a text logo instead, handled directly in
+ * header.php), but this keeps the same fix in place for whenever one is.
+ */
+add_filter( 'get_custom_logo', function ( $html ) {
+	if ( 'sv' === COS_Language_Routing::current_lang() ) {
+		$html = str_replace( home_url( '/' ) . '"', home_url( '/sv/' ) . '"', $html );
+	}
+	return $html;
+} );
 
 function cos_theme_setup() {
 	add_theme_support( 'title-tag' );
@@ -79,14 +100,33 @@ function cos_woocommerce_wrapper_end() {
 remove_action( 'woocommerce_before_main_content', 'woocommerce_output_all_notices', 10 );
 add_action( 'woocommerce_before_main_content', 'woocommerce_output_all_notices', 15 );
 add_action( 'woocommerce_before_main_content', 'cos_woocommerce_title_bar', 5 );
+
+/**
+ * WooCommerce's shop page title comes from the "Shop" page setting, which
+ * has no Swedish counterpart — override it directly when on the shop root
+ * in a Swedish context rather than trying to localize a WP page title.
+ */
+add_filter( 'woocommerce_page_title', function ( $title ) {
+	if ( is_shop() && 'sv' === COS_Language_Routing::current_lang() ) {
+		return 'Butik';
+	}
+	return $title;
+} );
+
 function cos_woocommerce_title_bar() {
+	$is_sv = 'sv' === COS_Language_Routing::current_lang();
 	?>
 	<div class="page-title-bar page-title-bar--blue">
 		<div class="container">
 			<h1><?php woocommerce_page_title(); ?></h1>
 			<?php if ( is_shop() ) : ?>
-				<p><?php esc_html_e( 'Bring a piece of Sweden\'s heritage into your home. Our shop offers a curated selection of books, interior design, accessories and more inspired by Sweden\'s remarkable castles, palaces, gardens and historic interiors.', 'cos-theme' ); ?></p>
-				<p><?php esc_html_e( 'Each product is chosen for its quality, craftsmanship, and connection to Swedish history and design. Whether you\'re looking for a meaningful gift or something special for your own home, we hope our collection inspires you.', 'cos-theme' ); ?></p>
+				<?php if ( $is_sv ) : ?>
+					<p>Ta hem en del av Sveriges kulturarv. Vår butik erbjuder ett utvalt sortiment av böcker, inredning, accessoarer och mer, inspirerat av Sveriges enastående slott, palats, trädgårdar och historiska interiörer.</p>
+					<p>Varje produkt är utvald för sin kvalitet, hantverk och koppling till svensk historia och design. Oavsett om du letar efter en meningsfull present eller något speciellt till ditt eget hem hoppas vi att vår kollektion inspirerar dig.</p>
+				<?php else : ?>
+					<p><?php esc_html_e( 'Bring a piece of Sweden\'s heritage into your home. Our shop offers a curated selection of books, interior design, accessories and more inspired by Sweden\'s remarkable castles, palaces, gardens and historic interiors.', 'cos-theme' ); ?></p>
+					<p><?php esc_html_e( 'Each product is chosen for its quality, craftsmanship, and connection to Swedish history and design. Whether you\'re looking for a meaningful gift or something special for your own home, we hope our collection inspires you.', 'cos-theme' ); ?></p>
+				<?php endif; ?>
 			<?php endif; ?>
 		</div>
 	</div>
@@ -152,9 +192,10 @@ function cos_enqueue_assets() {
 	wp_enqueue_style( 'cos-theme-style', get_stylesheet_uri(), array(), cos_asset_version( '/style.css' ) );
 	wp_enqueue_script( 'cos-theme-main', COS_THEME_URI . '/assets/js/main.js', array(), cos_asset_version( '/assets/js/main.js' ), true );
 
-	$is_map_page      = is_page( 'map' );
-	$is_term_page     = is_tax( array( 'cos_region', 'cos_category' ) );
-	$is_building_page = is_singular( array( 'cos_building', 'cos_listing' ) );
+	$is_sv             = 'sv' === COS_Language_Routing::current_lang();
+	$is_map_page       = cos_is_page_any_lang( 'map' );
+	$is_term_page      = is_tax( array( 'cos_region', 'cos_category' ) );
+	$is_building_page  = is_singular( array( 'cos_building', 'cos_listing' ) );
 
 	if ( $is_map_page || $is_term_page || $is_building_page ) {
 		wp_enqueue_style( 'leaflet', COS_THEME_URI . '/assets/vendor/leaflet/leaflet.css', array(), '1.9.4' );
@@ -165,9 +206,9 @@ function cos_enqueue_assets() {
 		wp_enqueue_script( 'cos-map', COS_THEME_URI . '/assets/js/map.js', array( 'leaflet' ), cos_asset_version( '/assets/js/map.js' ), true );
 
 		wp_localize_script( 'cos-map', 'cosMapData', array(
-			'endpoint'         => esc_url_raw( rest_url( 'cos-core/v1/map-data' ) ),
-			'buildingsLabel'   => __( 'destinations', 'cos-theme' ),
-			'viewDetailsLabel' => __( 'View details', 'cos-theme' ),
+			'endpoint'         => esc_url_raw( add_query_arg( 'lang', $is_sv ? 'sv' : 'en', rest_url( 'cos-core/v1/map-data' ) ) ),
+			'buildingsLabel'   => $is_sv ? __( 'destinationer', 'cos-theme' ) : __( 'destinations', 'cos-theme' ),
+			'viewDetailsLabel' => $is_sv ? __( 'Visa detaljer', 'cos-theme' ) : __( 'View details', 'cos-theme' ),
 		) );
 	}
 
@@ -175,8 +216,8 @@ function cos_enqueue_assets() {
 		wp_enqueue_script( 'cos-term-map', COS_THEME_URI . '/assets/js/term-map.js', array( 'leaflet' ), cos_asset_version( '/assets/js/term-map.js' ), true );
 
 		wp_localize_script( 'cos-term-map', 'cosTermMapData', array(
-			'endpoint'         => esc_url_raw( rest_url( 'cos-core/v1/map-data' ) ),
-			'viewDetailsLabel' => __( 'View details', 'cos-theme' ),
+			'endpoint'         => esc_url_raw( add_query_arg( 'lang', $is_sv ? 'sv' : 'en', rest_url( 'cos-core/v1/map-data' ) ) ),
+			'viewDetailsLabel' => $is_sv ? __( 'Visa detaljer', 'cos-theme' ) : __( 'View details', 'cos-theme' ),
 		) );
 	}
 
@@ -192,9 +233,17 @@ function cos_enqueue_assets() {
 	wp_enqueue_script( 'cos-search', COS_THEME_URI . '/assets/js/search.js', array(), cos_asset_version( '/assets/js/search.js' ), true );
 
 	wp_localize_script( 'cos-search', 'cosSearchData', array(
-		'endpoint'     => esc_url_raw( rest_url( 'cos-core/v1/search' ) ),
-		'searchPageUrl' => home_url( '/?s=' ),
-		'labels'       => array(
+		'endpoint'      => esc_url_raw( add_query_arg( 'lang', $is_sv ? 'sv' : 'en', rest_url( 'cos-core/v1/search' ) ) ),
+		'searchPageUrl' => home_url( $is_sv ? '/sv/?s=' : '/?s=' ),
+		'labels'        => $is_sv ? array(
+			'destinations' => __( 'Destinationer', 'cos-theme' ),
+			'terms'        => __( 'Kategorier & Landskap', 'cos-theme' ),
+			'articles'     => __( 'Artiklar', 'cos-theme' ),
+			'listings'     => __( 'Till salu', 'cos-theme' ),
+			'products'     => __( 'Butik', 'cos-theme' ),
+			'noResults'    => __( 'Inga resultat hittades.', 'cos-theme' ),
+			'viewAll'      => __( 'Se alla resultat för "%s"', 'cos-theme' ),
+		) : array(
 			'destinations' => __( 'Destinations', 'cos-theme' ),
 			'terms'        => __( 'Categories & Regions', 'cos-theme' ),
 			'articles'     => __( 'Articles', 'cos-theme' ),

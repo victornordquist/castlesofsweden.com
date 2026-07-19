@@ -1,4 +1,7 @@
-<?php get_header(); ?>
+<?php
+get_header();
+$is_sv = 'sv' === COS_Language_Routing::current_lang();
+?>
 
 <?php while ( have_posts() ) : the_post();
 	$post_id       = get_the_ID();
@@ -32,8 +35,13 @@
 		<?php if ( $image_credit ) : ?>
 			<p class="page-title-bar__credit">
 				<?php
-				/* translators: %s: photo credit */
-				printf( esc_html__( 'Photo: %s', 'cos-theme' ), esc_html( $image_credit ) );
+				if ( $is_sv ) {
+					/* translators: %s: photo credit */
+					printf( esc_html__( 'Foto: %s', 'cos-theme' ), esc_html( $image_credit ) );
+				} else {
+					/* translators: %s: photo credit */
+					printf( esc_html__( 'Photo: %s', 'cos-theme' ), esc_html( $image_credit ) );
+				}
 				?>
 			</p>
 		<?php endif; ?>
@@ -47,11 +55,19 @@
 				<?php else : ?>
 					<p class="building-content-placeholder">
 						<?php
-						printf(
-							/* translators: %s: listing name */
-							esc_html__( 'Full details for %s are coming soon.', 'cos-theme' ),
-							esc_html( get_the_title() )
-						);
+						if ( $is_sv ) {
+							printf(
+								/* translators: %s: listing name */
+								esc_html__( 'Fullständiga uppgifter för %s kommer snart.', 'cos-theme' ),
+								esc_html( get_the_title() )
+							);
+						} else {
+							printf(
+								/* translators: %s: listing name */
+								esc_html__( 'Full details for %s are coming soon.', 'cos-theme' ),
+								esc_html( get_the_title() )
+							);
+						}
 						?>
 					</p>
 				<?php endif; ?>
@@ -74,25 +90,25 @@
 					<dl class="building-info-box__list">
 						<?php if ( $location ) : ?>
 							<div class="building-info-box__row">
-								<dt><?php esc_html_e( 'Location', 'cos-theme' ); ?></dt>
+								<dt><?php echo esc_html( $is_sv ? 'Plats' : 'Location' ); ?></dt>
 								<dd><?php echo esc_html( $location ); ?></dd>
 							</div>
 						<?php endif; ?>
 						<?php if ( $building_size ) : ?>
 							<div class="building-info-box__row">
-								<dt><?php esc_html_e( 'Building Size', 'cos-theme' ); ?></dt>
+								<dt><?php echo esc_html( $is_sv ? 'Byggnadsyta' : 'Building Size' ); ?></dt>
 								<dd><?php echo esc_html( number_format_i18n( $building_size ) . ' m²' ); ?></dd>
 							</div>
 						<?php endif; ?>
 						<?php if ( $land_size ) : ?>
 							<div class="building-info-box__row">
-								<dt><?php esc_html_e( 'Land Size', 'cos-theme' ); ?></dt>
+								<dt><?php echo esc_html( $is_sv ? 'Markareal' : 'Land Size' ); ?></dt>
 								<dd><?php echo esc_html( number_format_i18n( $land_size ) . ' ha' ); ?></dd>
 							</div>
 						<?php endif; ?>
 						<?php if ( $broker_name ) : ?>
 							<div class="building-info-box__row">
-								<dt><?php esc_html_e( 'Broker', 'cos-theme' ); ?></dt>
+								<dt><?php echo esc_html( $is_sv ? 'Mäklare' : 'Broker' ); ?></dt>
 								<dd><?php echo esc_html( $broker_name ); ?></dd>
 							</div>
 						<?php endif; ?>
@@ -101,7 +117,7 @@
 					<?php if ( $broker_url ) : ?>
 						<div class="building-info-box__actions">
 							<a class="button" href="<?php echo esc_url( $broker_url ); ?>" target="_blank" rel="noopener">
-								<?php esc_html_e( 'Contact broker', 'cos-theme' ); ?>
+								<?php echo esc_html( $is_sv ? 'Kontakta mäklare' : 'Contact broker' ); ?>
 							</a>
 						</div>
 					<?php endif; ?>
@@ -112,7 +128,7 @@
 
 	<?php if ( ! empty( $gallery_ids ) ) : ?>
 		<div class="container section listing-gallery">
-			<h2 class="listing-gallery__title"><?php esc_html_e( 'Photo Gallery', 'cos-theme' ); ?></h2>
+			<h2 class="listing-gallery__title"><?php echo esc_html( $is_sv ? 'Bildgalleri' : 'Photo Gallery' ); ?></h2>
 			<div class="listing-gallery__grid">
 				<?php foreach ( $gallery_ids as $gallery_id ) :
 					$full  = wp_get_attachment_image_src( $gallery_id, 'full' );
