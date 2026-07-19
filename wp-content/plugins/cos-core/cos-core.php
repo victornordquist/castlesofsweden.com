@@ -25,6 +25,8 @@ require_once COS_CORE_DIR . 'includes/class-newsletter.php';
 require_once COS_CORE_DIR . 'includes/class-listing-meta-fields.php';
 require_once COS_CORE_DIR . 'includes/class-currency.php';
 require_once COS_CORE_DIR . 'includes/class-post-meta-fields.php';
+require_once COS_CORE_DIR . 'includes/class-building-import-helpers.php';
+require_once COS_CORE_DIR . 'includes/class-admin-import-buildings.php';
 
 COS_Post_Types::init();
 COS_Taxonomies::init();
@@ -36,6 +38,7 @@ COS_Newsletter::init();
 COS_Listing_Meta_Fields::init();
 COS_Currency::init();
 COS_Post_Meta_Fields::init();
+COS_Admin_Import_Buildings::init();
 
 register_activation_hook( __FILE__, function () {
 	COS_Post_Types::register_building();
