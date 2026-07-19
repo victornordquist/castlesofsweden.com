@@ -1,0 +1,210 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+define( 'COS_THEME_DIR', get_stylesheet_directory() );
+define( 'COS_THEME_URI', get_stylesheet_directory_uri() );
+
+/**
+ * 12 destinations per page on the Visit region/category archives, instead
+ * of the site-wide default of 10 — scoped to just these two taxonomies so
+ * it doesn't affect pagination elsewhere (News, search, etc.).
+ */
+function cos_taxonomy_archive_query( $query ) {
+	if ( ! is_admin() && $query->is_main_query() && is_tax( array( 'cos_region', 'cos_category' ) ) ) {
+		$query->set( 'posts_per_page', 12 );
+	}
+}
+add_action( 'pre_get_posts', 'cos_taxonomy_archive_query' );
+
+/**
+ * Fixed brand-level primary navigation.
+ * Homepage is reached via the clickable logo, not a nav item.
+ */
+function cos_primary_nav_links() {
+	return array(
+		'Visit'             => home_url( '/visit/' ),
+		'Map'               => home_url( '/map/' ),
+		'For Sale'          => home_url( '/for-sale/' ),
+		'The Journal'       => home_url( '/journal/' ),
+		'Shop'              => home_url( '/shop/' ),
+		'Support us'        => home_url( '/support-us/' ),
+	);
+}
+
+function cos_theme_setup() {
+	add_theme_support( 'title-tag' );
+	add_theme_support( 'post-thumbnails' );
+	add_theme_support( 'html5', array( 'search-form', 'gallery', 'caption', 'style', 'script' ) );
+	add_theme_support( 'custom-logo', array(
+		'height'      => 60,
+		'width'       => 200,
+		'flex-height' => true,
+		'flex-width'  => true,
+	) );
+	add_theme_support( 'woocommerce', array(
+		'thumbnail_image_width' => 800,
+	) );
+	add_theme_support( 'wc-product-gallery-zoom' );
+	add_theme_support( 'wc-product-gallery-lightbox' );
+	add_theme_support( 'wc-product-gallery-slider' );
+
+	register_nav_menus( array(
+		'primary' => __( 'Primary Menu', 'cos-theme' ),
+	) );
+}
+add_action( 'after_setup_theme', 'cos_theme_setup' );
+
+/**
+ * Wraps WooCommerce's default archive/single templates in the same
+ * .container.section shell used by every other page on the site, instead of
+ * WooCommerce's own unstyled wrapper markup.
+ */
+remove_action( 'woocommerce_before_main_content', 'woocommerce_output_content_wrapper', 10 );
+remove_action( 'woocommerce_after_main_content', 'woocommerce_output_content_wrapper_end', 10 );
+add_action( 'woocommerce_before_main_content', 'cos_woocommerce_wrapper_start', 10 );
+add_action( 'woocommerce_after_main_content', 'cos_woocommerce_wrapper_end', 10 );
+function cos_woocommerce_wrapper_start() {
+	echo '<div class="container section woocommerce-page">';
+}
+function cos_woocommerce_wrapper_end() {
+	echo '</div>';
+}
+
+/**
+ * Replaces the default shop/category page title ("Shop") with our own
+ * page-title-bar, matching every other archive on the site.
+ */
+remove_action( 'woocommerce_before_main_content', 'woocommerce_output_all_notices', 10 );
+add_action( 'woocommerce_before_main_content', 'woocommerce_output_all_notices', 15 );
+add_action( 'woocommerce_before_main_content', 'cos_woocommerce_title_bar', 5 );
+function cos_woocommerce_title_bar() {
+	?>
+	<div class="page-title-bar page-title-bar--blue">
+		<div class="container">
+			<h1><?php woocommerce_page_title(); ?></h1>
+			<?php if ( is_shop() ) : ?>
+				<p><?php esc_html_e( 'Bring a piece of Sweden\'s heritage into your home. Our shop offers a curated selection of books, interior design, accessories and more inspired by Sweden\'s remarkable castles, palaces, gardens and historic interiors.', 'cos-theme' ); ?></p>
+				<p><?php esc_html_e( 'Each product is chosen for its quality, craftsmanship, and connection to Swedish history and design. Whether you\'re looking for a meaningful gift or something special for your own home, we hope our collection inspires you.', 'cos-theme' ); ?></p>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php
+}
+remove_action( 'woocommerce_sidebar', 'woocommerce_get_sidebar', 10 );
+
+/**
+ * WooCommerce's default stylesheet lays the product grid out with
+ * float/percentage widths (e.g. width: 22.1% for a 4-column grid), which
+ * fights with our own CSS Grid layout below. We style everything ourselves,
+ * so drop WC's stylesheets entirely rather than fight the cascade.
+ */
+add_filter( 'woocommerce_enqueue_styles', '__return_empty_array' );
+
+/**
+ * Single product pages: no reviews tab, no related products, and the full
+ * description moves into the summary column (below the add-to-cart button
+ * and category meta) instead of living in a "Description" tab underneath.
+ */
+add_filter( 'woocommerce_product_tabs', function ( $tabs ) {
+	unset( $tabs['reviews'] );
+	unset( $tabs['description'] );
+	return $tabs;
+} );
+remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_output_related_products', 20 );
+add_action( 'woocommerce_single_product_summary', 'cos_woocommerce_summary_description', 45 );
+function cos_woocommerce_summary_description() {
+	if ( trim( get_the_content() ) === '' ) {
+		return;
+	}
+	echo '<div class="woocommerce-product-details__description">';
+	the_content();
+	echo '</div>';
+}
+
+/**
+ * The shop only carries a handful of products, so the overview drops the
+ * breadcrumb and result count, keeping only the sort dropdown.
+ */
+remove_action( 'woocommerce_before_main_content', 'woocommerce_breadcrumb', 20 );
+remove_action( 'woocommerce_before_shop_loop', 'woocommerce_result_count', 20 );
+
+/**
+ * The shop only carries a handful of products, so the overview stays to
+ * image, name and price — no ratings or an "Add to cart" button in the
+ * grid (that only appears on the single product page).
+ */
+remove_action( 'woocommerce_after_shop_loop_item_title', 'woocommerce_template_loop_rating', 5 );
+remove_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10 );
+
+/**
+ * Cache-busts our own theme assets by file modification time, so edits are
+ * picked up immediately instead of being served stale under an unchanged
+ * ?ver= query string (theme Version stays fixed across day-to-day edits).
+ */
+function cos_asset_version( $relative_path ) {
+	$path = COS_THEME_DIR . $relative_path;
+	return file_exists( $path ) ? filemtime( $path ) : wp_get_theme()->get( 'Version' );
+}
+
+function cos_enqueue_assets() {
+	wp_enqueue_style( 'cos-theme-style', get_stylesheet_uri(), array(), cos_asset_version( '/style.css' ) );
+	wp_enqueue_script( 'cos-theme-main', COS_THEME_URI . '/assets/js/main.js', array(), cos_asset_version( '/assets/js/main.js' ), true );
+
+	$is_map_page      = is_page( 'map' );
+	$is_term_page     = is_tax( array( 'cos_region', 'cos_category' ) );
+	$is_building_page = is_singular( array( 'cos_building', 'cos_listing' ) );
+
+	if ( $is_map_page || $is_term_page || $is_building_page ) {
+		wp_enqueue_style( 'leaflet', COS_THEME_URI . '/assets/vendor/leaflet/leaflet.css', array(), '1.9.4' );
+		wp_enqueue_script( 'leaflet', COS_THEME_URI . '/assets/vendor/leaflet/leaflet.js', array(), '1.9.4', true );
+	}
+
+	if ( $is_map_page ) {
+		wp_enqueue_script( 'cos-map', COS_THEME_URI . '/assets/js/map.js', array( 'leaflet' ), cos_asset_version( '/assets/js/map.js' ), true );
+
+		wp_localize_script( 'cos-map', 'cosMapData', array(
+			'endpoint'         => esc_url_raw( rest_url( 'cos-core/v1/map-data' ) ),
+			'buildingsLabel'   => __( 'destinations', 'cos-theme' ),
+			'viewDetailsLabel' => __( 'View details', 'cos-theme' ),
+		) );
+	}
+
+	if ( $is_term_page ) {
+		wp_enqueue_script( 'cos-term-map', COS_THEME_URI . '/assets/js/term-map.js', array( 'leaflet' ), cos_asset_version( '/assets/js/term-map.js' ), true );
+
+		wp_localize_script( 'cos-term-map', 'cosTermMapData', array(
+			'endpoint'         => esc_url_raw( rest_url( 'cos-core/v1/map-data' ) ),
+			'viewDetailsLabel' => __( 'View details', 'cos-theme' ),
+		) );
+	}
+
+	if ( $is_building_page ) {
+		wp_enqueue_script( 'cos-building-map', COS_THEME_URI . '/assets/js/building-map.js', array( 'leaflet' ), cos_asset_version( '/assets/js/building-map.js' ), true );
+	}
+
+	if ( is_singular( 'cos_listing' ) && get_post_meta( get_the_ID(), 'cos_listing_gallery', true ) ) {
+		wp_enqueue_script( 'cos-gallery-lightbox', COS_THEME_URI . '/assets/js/gallery-lightbox.js', array(), cos_asset_version( '/assets/js/gallery-lightbox.js' ), true );
+	}
+
+	// Sitewide: every page has the nav search trigger (and its overlay), not just /search/ and the homepage hero.
+	wp_enqueue_script( 'cos-search', COS_THEME_URI . '/assets/js/search.js', array(), cos_asset_version( '/assets/js/search.js' ), true );
+
+	wp_localize_script( 'cos-search', 'cosSearchData', array(
+		'endpoint'     => esc_url_raw( rest_url( 'cos-core/v1/search' ) ),
+		'searchPageUrl' => home_url( '/?s=' ),
+		'labels'       => array(
+			'destinations' => __( 'Destinations', 'cos-theme' ),
+			'terms'        => __( 'Categories & Regions', 'cos-theme' ),
+			'articles'     => __( 'Articles', 'cos-theme' ),
+			'listings'     => __( 'For Sale', 'cos-theme' ),
+			'products'     => __( 'Shop', 'cos-theme' ),
+			'noResults'    => __( 'No results found.', 'cos-theme' ),
+			'viewAll'      => __( 'See all results for "%s"', 'cos-theme' ),
+		),
+	) );
+}
+add_action( 'wp_enqueue_scripts', 'cos_enqueue_assets' );
+
+require_once COS_THEME_DIR . '/inc/template-tags.php';
