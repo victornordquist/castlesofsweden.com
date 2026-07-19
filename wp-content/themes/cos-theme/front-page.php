@@ -7,7 +7,7 @@
 
 		<div class="cos-search cos-search--destinations">
 			<form class="cos-search__form" action="<?php echo esc_url( home_url( '/' ) ); ?>" method="get" role="search">
-				<input type="search" name="s" class="cos-search__input" placeholder="<?php esc_attr_e( 'Find a place to visit…', 'cos-theme' ); ?>" autocomplete="off">
+				<input type="search" name="s" class="cos-search__input" placeholder="<?php esc_attr_e( 'Find your next destination...', 'cos-theme' ); ?>" autocomplete="off">
 				<button type="submit" class="button"><?php esc_html_e( 'Search', 'cos-theme' ); ?></button>
 			</form>
 			<div class="cos-search__results" hidden></div>

@@ -1351,3 +1351,24 @@ body.search-overlay-open { overflow: hidden; }
 	font-family: var(--font-body);
 	width: 100%;
 }
+
+.woocommerce-message,
+.woocommerce-error,
+.woocommerce-info {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+	list-style: none;
+	margin: 0 0 32px;
+	padding: 16px 20px;
+	background: var(--color-beige);
+	border-left: 3px solid var(--color-accent);
+}
+.woocommerce-error { border-left-color: #c0392b; }
+.woocommerce-message .button,
+.woocommerce-error .button,
+.woocommerce-info .button {
+	flex-shrink: 0;
+}
