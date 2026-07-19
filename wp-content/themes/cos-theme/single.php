@@ -1,4 +1,7 @@
-<?php get_header(); ?>
+<?php
+get_header();
+$is_sv = 'sv' === COS_Language_Routing::current_lang();
+?>
 
 <?php cos_journal_subnav(); ?>
 
@@ -20,12 +23,21 @@
 
 			<p class="news-article__meta">
 				<?php
-				printf(
-					/* translators: 1: author name, 2: publish date */
-					esc_html__( 'Words by %1$s · %2$s', 'cos-theme' ),
-					esc_html( get_the_author() ),
-					esc_html( get_the_date() )
-				);
+				if ( $is_sv ) {
+					printf(
+						/* translators: 1: author name, 2: publish date */
+						esc_html__( 'Text av %1$s · %2$s', 'cos-theme' ),
+						esc_html( get_the_author() ),
+						esc_html( get_the_date() )
+					);
+				} else {
+					printf(
+						/* translators: 1: author name, 2: publish date */
+						esc_html__( 'Words by %1$s · %2$s', 'cos-theme' ),
+						esc_html( get_the_author() ),
+						esc_html( get_the_date() )
+					);
+				}
 				?>
 			</p>
 		</div>

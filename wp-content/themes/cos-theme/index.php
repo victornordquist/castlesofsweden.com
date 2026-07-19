@@ -1,4 +1,7 @@
-<?php get_header(); ?>
+<?php
+get_header();
+$is_sv = 'sv' === COS_Language_Routing::current_lang();
+?>
 
 <div class="container section">
 	<?php if ( have_posts() ) : ?>
@@ -8,7 +11,7 @@
 			<?php endwhile; ?>
 		</div>
 	<?php else : ?>
-		<p><?php esc_html_e( 'Nothing found.', 'cos-theme' ); ?></p>
+		<p><?php echo esc_html( $is_sv ? 'Inget hittades.' : 'Nothing found.' ); ?></p>
 	<?php endif; ?>
 </div>
 

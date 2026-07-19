@@ -1,4 +1,10 @@
-<?php get_header(); ?>
+<?php
+/**
+ * Template Name: Journal
+ */
+get_header();
+$is_sv = 'sv' === COS_Language_Routing::current_lang();
+?>
 
 <div class="page-title-bar page-title-bar--white page-title-bar--center">
 	<div class="container">
@@ -43,8 +49,13 @@ if ( $featured_query->have_posts() ) {
 					<h2 class="journal-featured__title"><?php the_title(); ?></h2>
 					<p class="journal-featured__author">
 						<?php
-						/* translators: %s: author name */
-						printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( get_the_author() ) );
+						if ( $is_sv ) {
+							/* translators: %s: author name */
+							printf( esc_html__( 'Text av %s', 'cos-theme' ), esc_html( get_the_author() ) );
+						} else {
+							/* translators: %s: author name */
+							printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( get_the_author() ) );
+						}
 						?>
 					</p>
 				</div>
@@ -76,15 +87,23 @@ wp_reset_postdata();
 		<?php if ( $journal_query->max_num_pages > 1 ) : ?>
 			<nav class="pagination">
 				<?php if ( $paged > 1 ) : ?>
-					<a class="page-numbers" href="<?php echo esc_url( add_query_arg( 'paged', $paged - 1 ) ); ?>"><?php esc_html_e( '← Newer', 'cos-theme' ); ?></a>
+					<a class="page-numbers" href="<?php echo esc_url( add_query_arg( 'paged', $paged - 1 ) ); ?>"><?php echo esc_html( $is_sv ? '← Nyare' : '← Newer' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $paged < $journal_query->max_num_pages ) : ?>
-					<a class="page-numbers" href="<?php echo esc_url( add_query_arg( 'paged', $paged + 1 ) ); ?>"><?php esc_html_e( 'Older →', 'cos-theme' ); ?></a>
+					<a class="page-numbers" href="<?php echo esc_url( add_query_arg( 'paged', $paged + 1 ) ); ?>"><?php echo esc_html( $is_sv ? 'Äldre →' : 'Older →' ); ?></a>
 				<?php endif; ?>
 			</nav>
 		<?php endif; ?>
 	<?php else : ?>
-		<p><?php esc_html_e( 'No articles yet. Check back soon.', 'cos-theme' ); ?></p>
+		<p>
+			<?php
+			if ( $is_sv ) {
+				esc_html_e( 'Inga artiklar än. Titta gärna in igen snart.', 'cos-theme' );
+			} else {
+				esc_html_e( 'No articles yet. Check back soon.', 'cos-theme' );
+			}
+			?>
+		</p>
 	<?php endif; ?>
 
 	<?php wp_reset_postdata(); ?>

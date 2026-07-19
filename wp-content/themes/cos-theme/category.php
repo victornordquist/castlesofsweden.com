@@ -1,8 +1,11 @@
-<?php get_header(); ?>
+<?php
+get_header();
+$is_sv = 'sv' === COS_Language_Routing::current_lang();
+?>
 
 <div class="page-title-bar page-title-bar--white page-title-bar--center">
 	<div class="container">
-		<h1><?php esc_html_e( 'The Journal', 'cos-theme' ); ?></h1>
+		<h1><?php echo esc_html( $is_sv ? 'Magasinet' : 'The Journal' ); ?></h1>
 		<p class="page-title-bar__category">
 			<?php
 			$current_term = get_queried_object();
@@ -32,11 +35,19 @@
 		</div>
 
 		<?php the_posts_pagination( array(
-			'prev_text' => esc_html__( '← Newer', 'cos-theme' ),
-			'next_text' => esc_html__( 'Older →', 'cos-theme' ),
+			'prev_text' => $is_sv ? esc_html__( '← Nyare', 'cos-theme' ) : esc_html__( '← Newer', 'cos-theme' ),
+			'next_text' => $is_sv ? esc_html__( 'Äldre →', 'cos-theme' ) : esc_html__( 'Older →', 'cos-theme' ),
 		) ); ?>
 	<?php else : ?>
-		<p><?php esc_html_e( 'No articles in this category yet. Check back soon.', 'cos-theme' ); ?></p>
+		<p>
+			<?php
+			if ( $is_sv ) {
+				esc_html_e( 'Inga artiklar i den här kategorin än. Titta gärna in igen snart.', 'cos-theme' );
+			} else {
+				esc_html_e( 'No articles in this category yet. Check back soon.', 'cos-theme' );
+			}
+			?>
+		</p>
 	<?php endif; ?>
 </div>
 

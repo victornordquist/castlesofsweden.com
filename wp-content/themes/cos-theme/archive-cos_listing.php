@@ -1,9 +1,20 @@
-<?php get_header(); ?>
+<?php
+get_header();
+$is_sv = 'sv' === COS_Language_Routing::current_lang();
+?>
 
 <div class="page-title-bar">
 	<div class="container">
-		<h1><?php esc_html_e( 'For Sale', 'cos-theme' ); ?></h1>
-		<p><?php esc_html_e( 'Historic castles, manors and estates currently for sale in Sweden.', 'cos-theme' ); ?></p>
+		<h1><?php echo esc_html( $is_sv ? 'Till salu' : 'For Sale' ); ?></h1>
+		<p>
+			<?php
+			if ( $is_sv ) {
+				esc_html_e( 'Historiska slott, herrgårdar och gods till salu i Sverige.', 'cos-theme' );
+			} else {
+				esc_html_e( 'Historic castles, manors and estates currently for sale in Sweden.', 'cos-theme' );
+			}
+			?>
+		</p>
 	</div>
 </div>
 
@@ -16,7 +27,15 @@
 		</div>
 		<?php the_posts_pagination(); ?>
 	<?php else : ?>
-		<p><?php esc_html_e( 'No listings are currently available. Check back soon.', 'cos-theme' ); ?></p>
+		<p>
+			<?php
+			if ( $is_sv ) {
+				esc_html_e( 'Inga objekt är tillgängliga just nu. Titta gärna in igen snart.', 'cos-theme' );
+			} else {
+				esc_html_e( 'No listings are currently available. Check back soon.', 'cos-theme' );
+			}
+			?>
+		</p>
 	<?php endif; ?>
 </div>
 

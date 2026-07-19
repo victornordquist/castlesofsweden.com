@@ -598,8 +598,24 @@ input[type="submit"]:hover {
 	padding: 4px;
 }
 .nav-search-icon:hover { color: var(--color-accent-dark); }
+
+.lang-switcher {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 0.85rem;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+.lang-switcher__current { color: var(--color-text-muted); }
+.lang-switcher__sep { color: var(--color-text-muted); }
+.lang-switcher__link { color: var(--color-text); text-decoration: none; }
+.lang-switcher__link:hover { color: var(--color-accent-dark); }
+
 @media (max-width: 860px) {
 	.nav-search-icon { padding: 10px 0; }
+	.lang-switcher { padding: 10px 0; }
 }
 
 /* ---------- Search overlay ---------- */

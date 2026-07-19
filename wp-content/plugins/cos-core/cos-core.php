@@ -27,6 +27,8 @@ require_once COS_CORE_DIR . 'includes/class-currency.php';
 require_once COS_CORE_DIR . 'includes/class-post-meta-fields.php';
 require_once COS_CORE_DIR . 'includes/class-building-import-helpers.php';
 require_once COS_CORE_DIR . 'includes/class-admin-import-buildings.php';
+require_once COS_CORE_DIR . 'includes/class-language-fields.php';
+require_once COS_CORE_DIR . 'includes/class-language-routing.php';
 
 COS_Post_Types::init();
 COS_Taxonomies::init();
@@ -39,6 +41,8 @@ COS_Listing_Meta_Fields::init();
 COS_Currency::init();
 COS_Post_Meta_Fields::init();
 COS_Admin_Import_Buildings::init();
+COS_Language_Fields::init();
+COS_Language_Routing::init();
 
 register_activation_hook( __FILE__, function () {
 	COS_Post_Types::register_building();

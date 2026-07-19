@@ -96,6 +96,7 @@ function cos_listing_price_html( $price_sek ) {
  * price (with auto-converted USD/EUR), and a "View Listing" link.
  */
 function cos_listing_card( $post_id ) {
+	$is_sv         = 'sv' === COS_Language_Routing::current_lang();
 	$location      = get_post_meta( $post_id, 'cos_listing_location', true );
 	$building_size = get_post_meta( $post_id, 'cos_listing_building_size', true );
 	$land_size     = get_post_meta( $post_id, 'cos_listing_land_size', true );
@@ -103,12 +104,22 @@ function cos_listing_card( $post_id ) {
 
 	$size_parts = array();
 	if ( $building_size ) {
-		/* translators: %s: building size in square metres */
-		$size_parts[] = sprintf( __( '%s m² building', 'cos-theme' ), number_format_i18n( $building_size ) );
+		if ( $is_sv ) {
+			/* translators: %s: building size in square metres */
+			$size_parts[] = sprintf( __( '%s m² byggnad', 'cos-theme' ), number_format_i18n( $building_size ) );
+		} else {
+			/* translators: %s: building size in square metres */
+			$size_parts[] = sprintf( __( '%s m² building', 'cos-theme' ), number_format_i18n( $building_size ) );
+		}
 	}
 	if ( $land_size ) {
-		/* translators: %s: land size in hectares */
-		$size_parts[] = sprintf( __( '%s ha land', 'cos-theme' ), number_format_i18n( $land_size ) );
+		if ( $is_sv ) {
+			/* translators: %s: land size in hectares */
+			$size_parts[] = sprintf( __( '%s ha mark', 'cos-theme' ), number_format_i18n( $land_size ) );
+		} else {
+			/* translators: %s: land size in hectares */
+			$size_parts[] = sprintf( __( '%s ha land', 'cos-theme' ), number_format_i18n( $land_size ) );
+		}
 	}
 	?>
 	<a class="card listing-card" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
@@ -124,7 +135,7 @@ function cos_listing_card( $post_id ) {
 				<p class="listing-card__sizes"><?php echo esc_html( implode( ' · ', $size_parts ) ); ?></p>
 			<?php endif; ?>
 			<?php cos_listing_price_html( $price_sek ); ?>
-			<span class="listing-card__cta"><?php esc_html_e( 'View Listing', 'cos-theme' ); ?></span>
+			<span class="listing-card__cta"><?php echo esc_html( $is_sv ? 'Visa objekt' : 'View Listing' ); ?></span>
 		</div>
 	</a>
 	<?php
@@ -137,6 +148,23 @@ function cos_listing_card( $post_id ) {
 function cos_tile_image_url( $folder, $slug ) {
 	$path = COS_THEME_DIR . '/assets/images/' . $folder . '/' . $slug . '.jpg';
 	return file_exists( $path ) ? COS_THEME_URI . '/assets/images/' . $folder . '/' . $slug . '.jpg' : false;
+}
+
+/**
+ * The photo tiles are shared between languages (they're generic scenery,
+ * not text), but Swedish terms have their own auto-generated slugs (e.g.
+ * "accommodation-sv") that don't match the physical /assets/images/{slug}.jpg
+ * files, which are only named after the English slug. This resolves a term
+ * to whichever slug actually has an image — its own, or its paired term's.
+ */
+function cos_term_image_slug( $term ) {
+	$lang = get_term_meta( $term->term_id, 'cos_lang', true ) ?: 'en';
+	if ( 'en' === $lang ) {
+		return $term->slug;
+	}
+	$paired_id = (int) get_term_meta( $term->term_id, 'cos_translation_id', true );
+	$paired    = $paired_id ? get_term( $paired_id, $term->taxonomy ) : null;
+	return ( $paired && ! is_wp_error( $paired ) ) ? $paired->slug : $term->slug;
 }
 
 /**
@@ -170,6 +198,7 @@ function cos_image_tile( $term, $image_url, $count_label = '' ) {
  * title, then byline — no date.
  */
 function cos_journal_card( $post_id ) {
+	$is_sv      = 'sv' === COS_Language_Routing::current_lang();
 	$categories = get_the_category( $post_id );
 	?>
 	<a class="card journal-card" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
@@ -183,8 +212,13 @@ function cos_journal_card( $post_id ) {
 			<h3 class="card__title"><?php echo esc_html( get_the_title( $post_id ) ); ?></h3>
 			<p class="journal-card__author">
 				<?php
-				/* translators: %s: author name */
-				printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+				if ( $is_sv ) {
+					/* translators: %s: author name */
+					printf( esc_html__( 'Text av %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+				} else {
+					/* translators: %s: author name */
+					printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+				}
 				?>
 			</p>
 		</div>
@@ -213,14 +247,32 @@ const COS_JOURNAL_TOP_CATEGORIES = array(
  * (below the main site header).
  */
 function cos_journal_subnav() {
+	$is_sv = 'sv' === COS_Language_Routing::current_lang();
 	?>
-	<nav class="journal-subnav" aria-label="<?php esc_attr_e( 'Journal categories', 'cos-theme' ); ?>">
+	<nav class="journal-subnav" aria-label="<?php echo esc_attr( $is_sv ? 'Magasinkategorier' : 'Journal categories' ); ?>">
 		<div class="container">
 			<ul>
 				<?php foreach ( COS_JOURNAL_TOP_CATEGORIES as $slug ) :
-					$term = get_term_by( 'slug', $slug, 'category' );
+					// cos_lang_filter=false bypasses the language filter so this
+					// always resolves the canonical English term by its hardcoded
+					// slug, regardless of site language — it's then swapped for
+					// its Swedish pair below when needed.
+					$en_terms = get_terms( array(
+						'taxonomy'        => 'category',
+						'slug'            => $slug,
+						'hide_empty'      => false,
+						'cos_lang_filter' => false,
+					) );
+					$term = ( ! is_wp_error( $en_terms ) && $en_terms ) ? $en_terms[0] : null;
 					if ( ! $term ) {
 						continue;
+					}
+					if ( $is_sv ) {
+						$paired_id = (int) get_term_meta( $term->term_id, 'cos_translation_id', true );
+						$paired    = $paired_id ? get_term( $paired_id, 'category' ) : null;
+						if ( $paired && ! is_wp_error( $paired ) ) {
+							$term = $paired;
+						}
 					}
 					$children = get_categories( array( 'parent' => $term->term_id, 'hide_empty' => false ) );
 					?>
@@ -246,6 +298,7 @@ function cos_journal_subnav() {
  * category, title, and byline overlaid bottom-left on the featured image.
  */
 function cos_front_journal_card( $post_id ) {
+	$is_sv      = 'sv' === COS_Language_Routing::current_lang();
 	$categories = get_the_category( $post_id );
 	$thumbnail  = get_the_post_thumbnail_url( $post_id, 'large' );
 	?>
@@ -263,11 +316,86 @@ function cos_front_journal_card( $post_id ) {
 			<h3 class="front-journal-card__title"><?php echo esc_html( get_the_title( $post_id ) ); ?></h3>
 			<p class="front-journal-card__author">
 				<?php
-				/* translators: %s: author name */
-				printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+				if ( $is_sv ) {
+					/* translators: %s: author name */
+					printf( esc_html__( 'Text av %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+				} else {
+					/* translators: %s: author name */
+					printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+				}
 				?>
 			</p>
 		</div>
 	</a>
+	<?php
+}
+
+/**
+ * Like is_page( $slug ), but also matches that page's Swedish (or English)
+ * translation counterpart — since e.g. the Map page is "map" in English but
+ * "karta" in Swedish, a plain is_page( 'map' ) check would miss the Swedish
+ * version entirely. Used for the conditional asset-enqueue checks in
+ * functions.php.
+ */
+function cos_is_page_any_lang( $slug ) {
+	if ( is_page( $slug ) ) {
+		return true;
+	}
+	if ( ! is_page() ) {
+		return false;
+	}
+	$other_page = get_page_by_path( $slug, OBJECT, 'page' );
+	if ( ! $other_page ) {
+		return false;
+	}
+	$paired_id = (int) get_post_meta( $other_page->ID, 'cos_translation_id', true );
+	return $paired_id && is_page( $paired_id );
+}
+
+/**
+ * The URL of the current page/post/term's counterpart in the other
+ * language, for the nav language switcher. Falls back to that language's
+ * homepage when nothing's been translated yet, so the switcher is never a
+ * dead link.
+ */
+function cos_get_translation_link() {
+	$target_lang = 'sv' === COS_Language_Routing::current_lang() ? 'en' : 'sv';
+	$fallback    = 'sv' === $target_lang ? home_url( '/sv/' ) : home_url( '/' );
+
+	if ( is_singular() ) {
+		$paired_id = (int) get_post_meta( get_the_ID(), 'cos_translation_id', true );
+		if ( $paired_id && get_post( $paired_id ) ) {
+			return get_permalink( $paired_id );
+		}
+		return $fallback;
+	}
+
+	if ( is_tax() || is_category() ) {
+		$term = get_queried_object();
+		if ( $term instanceof WP_Term ) {
+			$paired_id = (int) get_term_meta( $term->term_id, 'cos_translation_id', true );
+			if ( $paired_id && get_term( $paired_id, $term->taxonomy ) ) {
+				return get_term_link( $paired_id, $term->taxonomy );
+			}
+		}
+	}
+
+	return $fallback;
+}
+
+/**
+ * Renders the "EN / SV" nav toggle: the current language as plain text,
+ * the other language linking to its counterpart (or that language's
+ * homepage, if this page has no translation yet).
+ */
+function cos_render_language_switcher() {
+	$current_lang = COS_Language_Routing::current_lang();
+	$target_lang  = 'sv' === $current_lang ? 'en' : 'sv';
+	?>
+	<span class="lang-switcher">
+		<span class="lang-switcher__current"><?php echo esc_html( strtoupper( $current_lang ) ); ?></span>
+		<span class="lang-switcher__sep">/</span>
+		<a class="lang-switcher__link" href="<?php echo esc_url( cos_get_translation_link() ); ?>"><?php echo esc_html( strtoupper( $target_lang ) ); ?></a>
+	</span>
 	<?php
 }
