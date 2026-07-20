@@ -430,35 +430,21 @@ class COS_Language_Fields {
 			return $terms;
 		}
 
-		// 'fields' => 'names' / 'id=>name' (used by, e.g., the tag-suggest
-		// AJAX handler) return plain strings instead of term objects —
-		// nothing to hang a term_id off of. Re-fetch the same query with
-		// full objects instead, since two terms can share an identical
-		// name and only the objects let each be labeled correctly.
+		// 'fields' => 'names' / 'id=>name' is what the tag-suggest AJAX
+		// handler (wp_ajax_ajax_tag_search(), used by every non-hierarchical
+		// taxonomy's autocomplete box) requests. Labeling those specific
+		// strings is unsafe, not just cosmetic: the label becomes part of
+		// the literal text WordPress inserts into the tag input, and on
+		// save wp_set_object_terms() matches tags by exact name — since no
+		// term is actually named e.g. "Palats (SV)", it silently creates a
+		// new orphan term instead of matching the real one. This produced
+		// several unlinked, un-language-tagged duplicate terms in
+		// production. Leave these two formats unlabeled entirely rather
+		// than risk more of them; the disambiguating label still shows up
+		// everywhere else (term list table, Quick Edit's existing-terms
+		// display, the block editor panel), which all resolve terms by ID.
 		if ( ! empty( $args['fields'] ) && in_array( $args['fields'], array( 'names', 'id=>name' ), true ) ) {
-			$full_args             = $args;
-			$full_args['taxonomy'] = $taxonomies;
-			$full_args['fields']   = 'all';
-			// Unhook first — otherwise this nested get_terms() call re-enters
-			// the same filter (via the plain-object branch below) and each
-			// name ends up labeled twice.
-			remove_filter( 'get_terms', array( __CLASS__, 'label_terms_with_language_in_admin' ), 10 );
-			$full_terms = get_terms( $full_args );
-			add_filter( 'get_terms', array( __CLASS__, 'label_terms_with_language_in_admin' ), 10, 3 );
-			if ( is_wp_error( $full_terms ) ) {
-				return $terms;
-			}
-			$labeled = array();
-			foreach ( $full_terms as $t ) {
-				$lang  = get_term_meta( $t->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
-				$label = $t->name . ' (' . strtoupper( $lang ) . ')';
-				if ( 'id=>name' === $args['fields'] ) {
-					$labeled[ $t->term_id ] = $label;
-				} else {
-					$labeled[] = $label;
-				}
-			}
-			return $labeled;
+			return $terms;
 		}
 
 		foreach ( $terms as $term ) {
