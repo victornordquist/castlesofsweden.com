@@ -41,8 +41,12 @@ class COS_Language_Fields {
 		foreach ( self::POST_TYPES as $post_type ) {
 			add_filter( "bulk_actions-edit-{$post_type}", array( __CLASS__, 'add_bulk_duplicate_action' ) );
 			add_filter( "handle_bulk_actions-edit-{$post_type}", array( __CLASS__, 'handle_bulk_duplicate_action' ), 10, 3 );
+			add_filter( "manage_{$post_type}_posts_columns", array( __CLASS__, 'add_language_column' ) );
+			add_action( "manage_{$post_type}_posts_custom_column", array( __CLASS__, 'render_language_column' ), 10, 2 );
 		}
 		add_action( 'admin_notices', array( __CLASS__, 'render_bulk_duplicate_notice' ) );
+		add_action( 'restrict_manage_posts', array( __CLASS__, 'render_language_filter_dropdown' ) );
+		add_filter( 'pre_get_posts', array( __CLASS__, 'apply_admin_language_filter' ) );
 
 		foreach ( self::taxonomies() as $taxonomy ) {
 			add_action( "{$taxonomy}_add_form_fields", array( __CLASS__, 'render_term_fields_add' ) );
@@ -307,6 +311,99 @@ class COS_Language_Fields {
 			</p>
 		</div>
 		<?php
+	}
+
+	public static function add_language_column( $columns ) {
+		$columns['cos_language'] = __( 'Language', 'cos-core' );
+		return $columns;
+	}
+
+	/**
+	 * Shows an EN/SV badge, plus either a link to the paired translation or
+	 * a one-click "+ Duplicate" link (reusing the same handler as the
+	 * per-post button) when nothing is linked yet — so the list screen
+	 * doubles as an at-a-glance translation-coverage view.
+	 */
+	public static function render_language_column( $column, $post_id ) {
+		if ( 'cos_language' !== $column ) {
+			return;
+		}
+
+		$lang       = get_post_meta( $post_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
+		$partner_id = (int) get_post_meta( $post_id, self::PAIR_META_KEY, true );
+		$partner    = $partner_id ? get_post( $partner_id ) : null;
+
+		$badge_color = 'sv' === $lang ? '#2271b1' : '#646970';
+		printf(
+			'<span style="display:inline-block;padding:2px 8px;border-radius:3px;background:%s;color:#fff;font-size:11px;font-weight:600;letter-spacing:0.5px;">%s</span>',
+			esc_attr( $badge_color ),
+			esc_html( strtoupper( $lang ) )
+		);
+
+		echo '<br />';
+
+		if ( $partner ) {
+			printf(
+				'<a href="%s" style="font-size:12px;">↔ %s</a>',
+				esc_url( get_edit_post_link( $partner_id ) ),
+				esc_html( self::current_lang_label( get_post_meta( $partner_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG ) )
+			);
+		} else {
+			printf(
+				'<a href="%s" style="font-size:12px;">%s</a>',
+				esc_url( wp_nonce_url( admin_url( 'admin.php?action=cos_duplicate_translation&post=' . $post_id ), 'cos_duplicate_translation_' . $post_id ) ),
+				esc_html__( '+ Duplicate', 'cos-core' )
+			);
+		}
+	}
+
+	public static function render_language_filter_dropdown( $post_type ) {
+		if ( ! in_array( $post_type, self::POST_TYPES, true ) ) {
+			return;
+		}
+		$current = isset( $_GET['cos_lang_filter'] ) ? sanitize_key( $_GET['cos_lang_filter'] ) : '';
+		?>
+		<select name="cos_lang_filter">
+			<option value=""><?php esc_html_e( 'All languages', 'cos-core' ); ?></option>
+			<?php foreach ( self::LANGUAGES as $code => $label ) : ?>
+				<option value="<?php echo esc_attr( $code ); ?>" <?php selected( $current, $code ); ?>><?php echo esc_html( $label ); ?></option>
+			<?php endforeach; ?>
+		</select>
+		<?php
+	}
+
+	/**
+	 * Handles the language filter dropdown on admin list screens (front-end
+	 * language filtering is handled separately by COS_Language_Routing).
+	 * Deliberately not gated on is_main_query(): the admin list table
+	 * (WP_Posts_List_Table) runs its own separate WP_Query instance rather
+	 * than the global main query, so that check would always exclude it.
+	 */
+	public static function apply_admin_language_filter( $query ) {
+		if ( ! is_admin() || empty( $_GET['cos_lang_filter'] ) ) {
+			return;
+		}
+		$post_type = $query->get( 'post_type' );
+		if ( ! in_array( $post_type, self::POST_TYPES, true ) ) {
+			return;
+		}
+
+		$lang = sanitize_key( $_GET['cos_lang_filter'] );
+		if ( ! array_key_exists( $lang, self::LANGUAGES ) ) {
+			return;
+		}
+
+		$meta_query = (array) $query->get( 'meta_query' );
+		if ( 'en' === $lang ) {
+			$meta_query[] = array(
+				'relation' => 'OR',
+				array( 'key' => self::LANG_META_KEY, 'compare' => 'NOT EXISTS' ),
+				array( 'key' => self::LANG_META_KEY, 'value' => 'en' ),
+			);
+		} else {
+			$meta_query[] = array( 'key' => self::LANG_META_KEY, 'value' => $lang );
+		}
+		$query->set( 'meta_query', $meta_query );
 	}
 
 	public static function duplicate_post_as_translation( $post_id ) {
