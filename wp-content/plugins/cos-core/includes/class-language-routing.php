@@ -322,12 +322,35 @@ class COS_Language_Routing {
 	 * unmatched by an absent filter — otherwise it leaks into English
 	 * archives alongside the untagged (implicitly English) posts.
 	 */
+	/**
+	 * A REST request only carries language context when it explicitly opts
+	 * in via this site's own ?lang= param (used by its own front-end
+	 * fetches, e.g. the search and map-data endpoints). Every other REST
+	 * usage — most importantly the block editor's own core REST calls,
+	 * which have no idea this site's language concept exists — has no such
+	 * context, and is_swedish_request() would otherwise silently default to
+	 * English there. That's not just a visibility bug: the block editor
+	 * trusts a post's own save response to reflect its current state, so if
+	 * that response is wrongly filtered to "no Swedish term assigned", the
+	 * editor's UI shows the assignment as gone, and a subsequent save
+	 * (autosave or manual) will persist that emptiness — silently
+	 * overwriting a real assignment with nothing. Confirmed to have
+	 * happened in production: a building's Swedish region assignment was
+	 * wiped this way shortly after being saved. Leave these requests
+	 * unfiltered entirely, the same principle as the existing
+	 * cos_lang_filter=false escape hatch, rather than guess at a language
+	 * that was never actually specified.
+	 */
+	private static function is_language_agnostic_rest_request() {
+		return defined( 'REST_REQUEST' ) && REST_REQUEST && ! isset( $_GET['lang'] );
+	}
+
 	public static function apply_language_filter( $query ) {
 		// is_admin() alone doesn't cover every administrative context —
 		// WP-CLI in particular runs with is_admin() === false, which would
 		// otherwise silently hide Swedish drafts from `wp post list` and
 		// any other CLI-driven query with no /sv/ URL to signal language.
-		if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+		if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) || self::is_language_agnostic_rest_request() ) {
 			return;
 		}
 
@@ -368,7 +391,7 @@ class COS_Language_Routing {
 	 * of every English and Swedish term mixed together.
 	 */
 	public static function apply_term_language_filter( $args, $taxonomies ) {
-		if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+		if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) || self::is_language_agnostic_rest_request() ) {
 			return $args;
 		}
 		// Escape hatch for code that intentionally needs to resolve a term by
