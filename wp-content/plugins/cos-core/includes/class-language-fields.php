@@ -508,41 +508,33 @@ class COS_Language_Fields {
 	}
 
 	/**
-	 * Quick Edit's currently-assigned-terms tag list is populated from a
-	 * plain comma-separated string (get_terms_to_edit()'s single generic
-	 * 'terms_to_edit' filter), a completely separate code path from both
-	 * label_terms_with_language_in_admin() and the REST-based one Gutenberg
-	 * uses, so it needs its own labeling pass.
+	 * Quick Edit's currently-assigned-terms tag list is populated by
+	 * get_terms_to_edit(), which checks the exact same object-term-
+	 * relationship cache the visible admin column (rendered earlier in the
+	 * same row) has usually already primed — and on that cache hit it
+	 * rebuilds term objects via get_term() per ID, bypassing get_terms()
+	 * and every filter hooked there. That leaves this filter holding only
+	 * an already-flattened, unlabeled name string, with no reliable way to
+	 * tell a same-named EN/SV pair apart from it (e.g. two terms are both
+	 * literally named "Värmland" in the database) — matching by name here
+	 * would find both and have no way to know which one this post actually
+	 * has. Sidestep the string entirely: $post is set by
+	 * WP_Posts_List_Table's row rendering (the same global the neighboring
+	 * template tags like get_the_excerpt() rely on), so re-derive the
+	 * labeled names from get_the_terms(), which label_get_the_terms_in_admin()
+	 * already labels correctly per-term regardless of this same caching
+	 * quirk.
 	 */
 	public static function label_quick_edit_terms( $terms_to_edit, $taxonomy ) {
-		if ( ! in_array( $taxonomy, self::taxonomies(), true ) || '' === $terms_to_edit ) {
+		global $post;
+		if ( ! in_array( $taxonomy, self::taxonomies(), true ) || '' === $terms_to_edit || empty( $post ) ) {
 			return $terms_to_edit;
 		}
-		// This filter only receives the flattened name string, not the post
-		// ID, so a same-named EN/SV pair can't be told apart here the way
-		// the other admin surfaces do it — label only the names that are
-		// unambiguous within this taxonomy (exactly one term with that
-		// name); leave anything with a duplicate name as-is rather than
-		// risk mislabeling it.
-		$names   = array_map( 'trim', explode( ',', html_entity_decode( $terms_to_edit ) ) );
-		$labeled = array();
-		foreach ( $names as $name ) {
-			if ( '' === $name ) {
-				continue;
-			}
-			$matches = get_terms( array(
-				'taxonomy'   => $taxonomy,
-				'name'       => $name,
-				'hide_empty' => false,
-			) );
-			if ( is_wp_error( $matches ) || 1 !== count( $matches ) ) {
-				$labeled[] = $name;
-				continue;
-			}
-			$lang      = get_term_meta( $matches[0]->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
-			$labeled[] = $name . ' (' . strtoupper( $lang ) . ')';
+		$terms = get_the_terms( $post->ID, $taxonomy );
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+			return $terms_to_edit;
 		}
-		return esc_attr( implode( ',', $labeled ) );
+		return esc_attr( implode( ',', wp_list_pluck( $terms, 'name' ) ) );
 	}
 
 	/**

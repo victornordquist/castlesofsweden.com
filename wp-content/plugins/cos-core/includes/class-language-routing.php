@@ -71,6 +71,9 @@ class COS_Language_Routing {
 		add_filter( 'template_include', array( __CLASS__, 'force_swedish_front_page' ) );
 		add_action( 'pre_get_posts', array( __CLASS__, 'apply_language_filter' ) );
 		add_filter( 'get_terms_args', array( __CLASS__, 'apply_term_language_filter' ), 10, 2 );
+		foreach ( COS_Language_Fields::taxonomies() as $taxonomy ) {
+			add_filter( "rest_{$taxonomy}_query", array( __CLASS__, 'show_all_terms_in_rest_editor' ) );
+		}
 
 		add_filter( 'post_type_link', array( __CLASS__, 'filter_post_link' ), 10, 2 );
 		add_filter( 'page_link', array( __CLASS__, 'filter_page_link' ), 10, 2 );
@@ -391,6 +394,29 @@ class COS_Language_Routing {
 			);
 		}
 		$args['meta_query'] = $meta_query;
+		return $args;
+	}
+
+	/**
+	 * The block editor's native taxonomy panel (and its search-as-you-type
+	 * box) doesn't use any of this site's own code — it fetches terms
+	 * straight from WordPress's own REST Terms Controller. That controller
+	 * runs entirely outside is_admin() (REST requests never set that flag,
+	 * even when the JS calling them is running inside wp-admin), so neither
+	 * apply_term_language_filter() nor COS_Language_Fields'
+	 * force_show_empty_terms_in_admin() ever engage for it — the former
+	 * still applies its EN/SV meta_query split there (only is_admin() is
+	 * checked, not this route specifically), and since a REST request has
+	 * no /sv/ URL or lang param to resolve, is_swedish_request() always
+	 * comes back English there, permanently hiding every Swedish-tagged
+	 * term from the block editor, not just leaving it unlabeled. Bypass
+	 * both restrictions specifically for this route so editors can find
+	 * and select every language variant of a term, the same as they
+	 * already can in the classic term-list screens.
+	 */
+	public static function show_all_terms_in_rest_editor( $args ) {
+		$args['cos_lang_filter'] = false;
+		$args['hide_empty']      = false;
 		return $args;
 	}
 
