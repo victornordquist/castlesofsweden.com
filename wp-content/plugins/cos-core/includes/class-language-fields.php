@@ -38,6 +38,12 @@ class COS_Language_Fields {
 		add_action( 'save_post', array( __CLASS__, 'save_meta_box' ) );
 		add_action( 'admin_action_cos_duplicate_translation', array( __CLASS__, 'handle_duplicate_post' ) );
 
+		foreach ( self::POST_TYPES as $post_type ) {
+			add_filter( "bulk_actions-edit-{$post_type}", array( __CLASS__, 'add_bulk_duplicate_action' ) );
+			add_filter( "handle_bulk_actions-edit-{$post_type}", array( __CLASS__, 'handle_bulk_duplicate_action' ), 10, 3 );
+		}
+		add_action( 'admin_notices', array( __CLASS__, 'render_bulk_duplicate_notice' ) );
+
 		foreach ( self::taxonomies() as $taxonomy ) {
 			add_action( "{$taxonomy}_add_form_fields", array( __CLASS__, 'render_term_fields_add' ) );
 			add_action( "{$taxonomy}_edit_form_fields", array( __CLASS__, 'render_term_fields_edit' ) );
@@ -242,6 +248,65 @@ class COS_Language_Fields {
 
 		wp_safe_redirect( get_edit_post_link( $new_id, 'raw' ) );
 		exit;
+	}
+
+	public static function add_bulk_duplicate_action( $actions ) {
+		$actions['cos_bulk_duplicate_translation'] = __( 'Duplicate as translation', 'cos-core' );
+		return $actions;
+	}
+
+	/**
+	 * Bulk version of the per-post "Duplicate as translation" button.
+	 * Posts that already have a paired translation are silently skipped
+	 * (matching the single-post button, which hides itself in that case)
+	 * rather than creating a second, orphaned duplicate.
+	 */
+	public static function handle_bulk_duplicate_action( $redirect_to, $action, $post_ids ) {
+		if ( 'cos_bulk_duplicate_translation' !== $action ) {
+			return $redirect_to;
+		}
+
+		$duplicated = 0;
+		$skipped    = 0;
+
+		foreach ( $post_ids as $post_id ) {
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				continue;
+			}
+			if ( get_post_meta( $post_id, self::PAIR_META_KEY, true ) ) {
+				$skipped++;
+				continue;
+			}
+			self::duplicate_post_as_translation( $post_id );
+			$duplicated++;
+		}
+
+		return add_query_arg( array(
+			'cos_bulk_duplicated' => $duplicated,
+			'cos_bulk_skipped'    => $skipped,
+		), $redirect_to );
+	}
+
+	public static function render_bulk_duplicate_notice() {
+		if ( ! isset( $_GET['cos_bulk_duplicated'] ) ) {
+			return;
+		}
+		$duplicated = absint( $_GET['cos_bulk_duplicated'] );
+		$skipped    = isset( $_GET['cos_bulk_skipped'] ) ? absint( $_GET['cos_bulk_skipped'] ) : 0;
+		?>
+		<div class="notice notice-success is-dismissible">
+			<p>
+				<?php
+				printf(
+					/* translators: 1: number duplicated, 2: number skipped (already had a translation) */
+					esc_html__( 'Duplicated %1$d item(s) as translations. %2$d already had a linked translation and were skipped.', 'cos-core' ),
+					(int) $duplicated,
+					(int) $skipped
+				);
+				?>
+			</p>
+		</div>
+		<?php
 	}
 
 	public static function duplicate_post_as_translation( $post_id ) {
