@@ -1193,7 +1193,7 @@ body.search-overlay-open { overflow: hidden; }
 	display: grid;
 	grid-template-columns: 2fr 1fr;
 	gap: 48px;
-	align-items: start;
+	align-items: center;
 }
 .support-us__col-main p { max-width: 720px; }
 .support-us__col-main h2 { margin-top: 0; margin-bottom: 20px; }
@@ -1217,7 +1217,7 @@ body.search-overlay-open { overflow: hidden; }
 	background: var(--color-accent);
 }
 .support-us__box {
-	background: #fff;
+	background: var(--color-blue);
 	box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 	padding: 32px;
 }
