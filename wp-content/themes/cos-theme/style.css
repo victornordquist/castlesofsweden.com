@@ -178,7 +178,7 @@ input[type="submit"]:hover {
 
 .menu-toggle { display: none; }
 
-@media (max-width: 860px) {
+@media (max-width: 1080px) {
 	.menu-toggle {
 		display: flex;
 		align-items: center;
