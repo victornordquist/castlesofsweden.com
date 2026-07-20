@@ -78,6 +78,23 @@ class COS_Language_Routing {
 		add_filter( 'term_link', array( __CLASS__, 'filter_term_link' ), 10, 3 );
 
 		add_action( 'wp_head', array( __CLASS__, 'output_hreflang_tags' ), 5 );
+		add_filter( 'redirect_canonical', array( __CLASS__, 'prevent_pagination_redirect_on_sv_routes' ) );
+	}
+
+	/**
+	 * WordPress's canonical redirect "corrects" paginated Swedish URLs like
+	 * /sv/magasinet/?paged=2 to the native /page/N/ path structure — but the
+	 * custom /sv/ rewrite rules never registered that sub-path (pagination
+	 * there works via the plain ?paged= query string instead), so the
+	 * "corrected" URL 404s. Suppressing the redirect keeps the working
+	 * ?paged= form intact rather than adding a parallel set of rewrite rules
+	 * just to match a URL shape nothing else requires.
+	 */
+	public static function prevent_pagination_redirect_on_sv_routes( $redirect_url ) {
+		if ( 'sv' === get_query_var( self::LANG_QUERY_VAR ) && get_query_var( 'paged' ) ) {
+			return false;
+		}
+		return $redirect_url;
 	}
 
 	/**
@@ -210,6 +227,16 @@ class COS_Language_Routing {
 				'top'
 			);
 		}
+		// Paginated form (/page/N/) must be registered BEFORE the plain rule
+		// below — for 'top' rules, earlier registration wins ties, and the
+		// plain rule's .+? (needed to support hierarchical child category
+		// paths) is loose enough to otherwise swallow "/page/2" into
+		// category_name itself instead of a separate paged value.
+		add_rewrite_rule(
+			'^sv/kategori/(.+?)/page/([0-9]+)/?$',
+			"index.php?category_name=\$matches[1]&{$lang}=sv&paged=\$matches[2]",
+			'top'
+		);
 		// WP core category archives support hierarchical child paths.
 		add_rewrite_rule(
 			'^sv/kategori/(.+?)/?$',
@@ -248,6 +275,15 @@ class COS_Language_Routing {
 		add_rewrite_rule(
 			'^sv/(?!' . $reserved . ')([^/]+)/?$',
 			"index.php?{$slug_var}=\$matches[1]&{$lang}=sv",
+			'top'
+		);
+		// Paginated form, e.g. /sv/magasinet/page/2/. Safe to register after
+		// the plain rule above (unlike the category rule's ordering, this
+		// one's [^/]+ can't span the extra /page/N segment, so there's no
+		// ambiguity between the two either way).
+		add_rewrite_rule(
+			'^sv/(?!' . $reserved . ')([^/]+)/page/([0-9]+)/?$',
+			"index.php?{$slug_var}=\$matches[1]&{$lang}=sv&paged=\$matches[2]",
 			'top'
 		);
 	}

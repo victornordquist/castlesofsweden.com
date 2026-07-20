@@ -45,6 +45,13 @@ class COS_Language_Fields {
 			add_action( "manage_{$post_type}_posts_custom_column", array( __CLASS__, 'render_language_column' ), 10, 2 );
 		}
 		add_action( 'admin_notices', array( __CLASS__, 'render_bulk_duplicate_notice' ) );
+		add_filter( 'get_terms', array( __CLASS__, 'label_terms_with_language_in_admin' ), 10, 3 );
+		add_filter( 'get_the_terms', array( __CLASS__, 'label_get_the_terms_in_admin' ), 10, 3 );
+		add_filter( 'get_terms_args', array( __CLASS__, 'force_show_empty_terms_in_admin' ), 10, 2 );
+		foreach ( self::taxonomies() as $taxonomy ) {
+			add_filter( "rest_prepare_{$taxonomy}", array( __CLASS__, 'label_term_language_in_rest' ), 10, 2 );
+		}
+		add_filter( 'terms_to_edit', array( __CLASS__, 'label_quick_edit_terms' ), 10, 2 );
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'render_language_filter_dropdown' ) );
 		add_filter( 'pre_get_posts', array( __CLASS__, 'apply_admin_language_filter' ) );
 
@@ -404,6 +411,171 @@ class COS_Language_Fields {
 			$meta_query[] = array( 'key' => self::LANG_META_KEY, 'value' => $lang );
 		}
 		$query->set( 'meta_query', $meta_query );
+	}
+
+	/**
+	 * Several taxonomies (regions especially — Skåne, Uppland etc. are the
+	 * same word in both languages) end up with an English and Swedish term
+	 * that display identically, making them impossible to tell apart in any
+	 * admin UI that lists term names (the post-edit taxonomy checklist, the
+	 * term list table, quick edit...). Appends "(EN)"/"(SV)" to every
+	 * translatable-taxonomy term's name, admin-side only — never touches
+	 * the front end or the stored term name itself.
+	 */
+	public static function label_terms_with_language_in_admin( $terms, $taxonomies, $args = array() ) {
+		if ( ! is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+			return $terms;
+		}
+		if ( ! array_intersect( (array) $taxonomies, self::taxonomies() ) ) {
+			return $terms;
+		}
+
+		// 'fields' => 'names' / 'id=>name' (used by, e.g., the tag-suggest
+		// AJAX handler) return plain strings instead of term objects —
+		// nothing to hang a term_id off of. Re-fetch the same query with
+		// full objects instead, since two terms can share an identical
+		// name and only the objects let each be labeled correctly.
+		if ( ! empty( $args['fields'] ) && in_array( $args['fields'], array( 'names', 'id=>name' ), true ) ) {
+			$full_args             = $args;
+			$full_args['taxonomy'] = $taxonomies;
+			$full_args['fields']   = 'all';
+			// Unhook first — otherwise this nested get_terms() call re-enters
+			// the same filter (via the plain-object branch below) and each
+			// name ends up labeled twice.
+			remove_filter( 'get_terms', array( __CLASS__, 'label_terms_with_language_in_admin' ), 10 );
+			$full_terms = get_terms( $full_args );
+			add_filter( 'get_terms', array( __CLASS__, 'label_terms_with_language_in_admin' ), 10, 3 );
+			if ( is_wp_error( $full_terms ) ) {
+				return $terms;
+			}
+			$labeled = array();
+			foreach ( $full_terms as $t ) {
+				$lang  = get_term_meta( $t->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
+				$label = $t->name . ' (' . strtoupper( $lang ) . ')';
+				if ( 'id=>name' === $args['fields'] ) {
+					$labeled[ $t->term_id ] = $label;
+				} else {
+					$labeled[] = $label;
+				}
+			}
+			return $labeled;
+		}
+
+		foreach ( $terms as $term ) {
+			if ( ! is_object( $term ) || ! isset( $term->term_id, $term->name ) ) {
+				continue;
+			}
+			$lang = get_term_meta( $term->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
+			$term->name .= ' (' . strtoupper( $lang ) . ')';
+		}
+		return $terms;
+	}
+
+	/**
+	 * Most admin UI that lists terms (tag-suggest autocomplete, the "most
+	 * used" cloud, Quick Edit) queries with hide_empty=true by default —
+	 * which hides every Swedish term entirely until at least one Swedish
+	 * post using it has been published, making it impossible to even
+	 * assign that term to a new draft in the meantime. Forces every term
+	 * to stay visible in the admin regardless of its published-post count.
+	 */
+	public static function force_show_empty_terms_in_admin( $args, $taxonomies ) {
+		if ( ! is_admin() ) {
+			return $args;
+		}
+		if ( ! array_intersect( (array) $taxonomies, self::taxonomies() ) ) {
+			return $args;
+		}
+		$args['hide_empty'] = false;
+		return $args;
+	}
+
+	/**
+	 * The visible per-taxonomy admin column (e.g. "Regions" on the Buildings
+	 * list) is rendered via get_the_terms(), which is its own thin caching
+	 * wrapper with its own separate filter — a cache hit skips the
+	 * get_terms() query (and label_terms_with_language_in_admin()) entirely,
+	 * so that filter alone can't be relied on here regardless of whether
+	 * this specific call is a hit or a miss.
+	 */
+	public static function label_get_the_terms_in_admin( $terms, $post_id, $taxonomy ) {
+		if ( ! is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+			return $terms;
+		}
+		if ( ! in_array( $taxonomy, self::taxonomies(), true ) || ! is_array( $terms ) ) {
+			return $terms;
+		}
+		foreach ( $terms as $term ) {
+			if ( ! is_object( $term ) || ! isset( $term->term_id, $term->name ) ) {
+				continue;
+			}
+			// Already labeled (e.g. this array came straight from a fresh
+			// get_terms() call that label_terms_with_language_in_admin()
+			// already handled) — don't double up.
+			if ( preg_match( '/\s\((EN|SV)\)$/', $term->name ) ) {
+				continue;
+			}
+			$lang = get_term_meta( $term->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
+			$term->name .= ' (' . strtoupper( $lang ) . ')';
+		}
+		return $terms;
+	}
+
+	/**
+	 * Quick Edit's currently-assigned-terms tag list is populated from a
+	 * plain comma-separated string (get_terms_to_edit()'s single generic
+	 * 'terms_to_edit' filter), a completely separate code path from both
+	 * label_terms_with_language_in_admin() and the REST-based one Gutenberg
+	 * uses, so it needs its own labeling pass.
+	 */
+	public static function label_quick_edit_terms( $terms_to_edit, $taxonomy ) {
+		if ( ! in_array( $taxonomy, self::taxonomies(), true ) || '' === $terms_to_edit ) {
+			return $terms_to_edit;
+		}
+		// This filter only receives the flattened name string, not the post
+		// ID, so a same-named EN/SV pair can't be told apart here the way
+		// the other admin surfaces do it — label only the names that are
+		// unambiguous within this taxonomy (exactly one term with that
+		// name); leave anything with a duplicate name as-is rather than
+		// risk mislabeling it.
+		$names   = array_map( 'trim', explode( ',', html_entity_decode( $terms_to_edit ) ) );
+		$labeled = array();
+		foreach ( $names as $name ) {
+			if ( '' === $name ) {
+				continue;
+			}
+			$matches = get_terms( array(
+				'taxonomy'   => $taxonomy,
+				'name'       => $name,
+				'hide_empty' => false,
+			) );
+			if ( is_wp_error( $matches ) || 1 !== count( $matches ) ) {
+				$labeled[] = $name;
+				continue;
+			}
+			$lang      = get_term_meta( $matches[0]->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
+			$labeled[] = $name . ' (' . strtoupper( $lang ) . ')';
+		}
+		return esc_attr( implode( ',', $labeled ) );
+	}
+
+	/**
+	 * Same labeling as label_terms_with_language_in_admin(), for the block
+	 * editor's taxonomy panel — it fetches terms via the REST API, a
+	 * separate request where is_admin() is always false even when the
+	 * request originates from a logged-in editor session.
+	 */
+	public static function label_term_language_in_rest( $response, $term ) {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return $response;
+		}
+		$lang = get_term_meta( $term->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
+		$data = $response->get_data();
+		if ( isset( $data['name'] ) ) {
+			$data['name'] .= ' (' . strtoupper( $lang ) . ')';
+			$response->set_data( $data );
+		}
+		return $response;
 	}
 
 	public static function duplicate_post_as_translation( $post_id ) {

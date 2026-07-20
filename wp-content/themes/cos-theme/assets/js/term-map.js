@@ -26,7 +26,7 @@ document.addEventListener( 'DOMContentLoaded', function () {
 	map.addLayer( markerGroup );
 
 	var url = cosTermMapData.endpoint +
-		'?taxonomy=' + encodeURIComponent( mapEl.dataset.taxonomy ) +
+		'&taxonomy=' + encodeURIComponent( mapEl.dataset.taxonomy ) +
 		'&term=' + encodeURIComponent( mapEl.dataset.term );
 
 	fetch( url )
