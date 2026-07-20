@@ -107,7 +107,7 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		} );
 
 		function fetchResults( query ) {
-			var url = cosSearchData.endpoint + '?q=' + encodeURIComponent( query );
+			var url = cosSearchData.endpoint + '&q=' + encodeURIComponent( query );
 			if ( destinationsOnly ) {
 				url += '&types=destinations';
 			}
