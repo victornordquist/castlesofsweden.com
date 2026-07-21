@@ -34,7 +34,7 @@ function cos_primary_nav_links() {
 		array( 'label' => $is_sv ? 'Destinationer' : 'Destinations', 'url' => home_url( $is_sv ? '/sv/besok/' : '/visit/' ) ),
 		array( 'label' => $is_sv ? 'Karta' : 'Map', 'url' => home_url( $is_sv ? '/sv/karta/' : '/map/' ) ),
 		array( 'label' => $is_sv ? 'Till salu' : 'For Sale', 'url' => home_url( $is_sv ? '/sv/till-salu/' : '/for-sale/' ) ),
-		array( 'label' => $is_sv ? 'Magasinet' : 'The Journal', 'url' => home_url( $is_sv ? '/sv/magasinet/' : '/journal/' ) ),
+		array( 'label' => $is_sv ? 'Magasinet' : 'Journal', 'url' => home_url( $is_sv ? '/sv/magasinet/' : '/journal/' ) ),
 		array( 'label' => $is_sv ? 'Butik' : 'Shop', 'url' => home_url( $is_sv ? '/sv/butik/' : '/shop/' ) ),
 		array( 'label' => $is_sv ? 'Stöd oss' : 'Support us', 'url' => home_url( $is_sv ? '/sv/stod-oss/' : '/support-us/' ), 'cta' => true ),
 	);

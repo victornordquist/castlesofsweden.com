@@ -84,7 +84,7 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 			}
 			?>
 		</p>
-		<a class="button" href="<?php echo esc_url( home_url( $is_sv ? '/sv/magasinet/' : '/journal/' ) ); ?>"><?php echo esc_html( $is_sv ? 'Till magasinet' : 'The Journal' ); ?></a>
+		<a class="button" href="<?php echo esc_url( home_url( $is_sv ? '/sv/magasinet/' : '/journal/' ) ); ?>"><?php echo esc_html( $is_sv ? 'Till magasinet' : 'Journal' ); ?></a>
 	</div>
 </section>
 
