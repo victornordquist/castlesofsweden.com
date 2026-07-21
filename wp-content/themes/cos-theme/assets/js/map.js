@@ -24,6 +24,16 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 	} ).addTo( map );
 
+	function haversineKm( lat1, lng1, lat2, lng2 ) {
+		var R = 6371;
+		var dLat = ( lat2 - lat1 ) * Math.PI / 180;
+		var dLng = ( lng2 - lng1 ) * Math.PI / 180;
+		var a = Math.sin( dLat / 2 ) * Math.sin( dLat / 2 ) +
+			Math.cos( lat1 * Math.PI / 180 ) * Math.cos( lat2 * Math.PI / 180 ) *
+			Math.sin( dLng / 2 ) * Math.sin( dLng / 2 );
+		return R * 2 * Math.atan2( Math.sqrt( a ), Math.sqrt( 1 - a ) );
+	}
+
 	function photoMarkerIcon( thumbnailUrl ) {
 		var style = thumbnailUrl ? "background-image:url('" + thumbnailUrl.replace( /'/g, '%27' ) + "');" : '';
 		return L.divIcon( {
@@ -49,6 +59,45 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		style: document.getElementById( 'cos-map-style' ),
 		era: document.getElementById( 'cos-map-era' )
 	};
+
+	// Near-me is a coordinate-based filter, not a building-attribute one, so
+	// it lives outside `filters`/`filterKeys` (those are built from values
+	// seen in the fetched building data, which lat/lng comparisons aren't).
+	var nearMeCheckbox     = document.getElementById( 'cos-map-near-me' );
+	var nearMeRadiusSelect = document.getElementById( 'cos-map-near-me-radius' );
+	var nearMeStatusEl     = document.getElementById( 'cos-map-near-me-status' );
+	var nearMeCoords       = null; // { lat, lng } once resolved (from URL or geolocation)
+
+	// The Map's region/category options are built from term *names* seen in
+	// the fetched data (see populateFilterOptions), but a link from the
+	// homepage hero only knows term *slugs* — cosMapData.regions/categories
+	// (slug -> name) bridges the two so an incoming URL can be applied.
+	var urlParams            = new URLSearchParams( window.location.search );
+	var pendingRegionName    = null;
+	var pendingCategoryNames = [];
+
+	if ( urlParams.get( 'region' ) && cosMapData.regions && cosMapData.regions[ urlParams.get( 'region' ) ] ) {
+		pendingRegionName = cosMapData.regions[ urlParams.get( 'region' ) ];
+	}
+	if ( urlParams.get( 'category' ) && cosMapData.categories ) {
+		urlParams.get( 'category' ).split( ',' ).forEach( function ( slug ) {
+			if ( cosMapData.categories[ slug ] ) {
+				pendingCategoryNames.push( cosMapData.categories[ slug ] );
+			}
+		} );
+	}
+	if ( urlParams.get( 'near_lat' ) && urlParams.get( 'near_lng' ) ) {
+		nearMeCoords = {
+			lat: parseFloat( urlParams.get( 'near_lat' ) ),
+			lng: parseFloat( urlParams.get( 'near_lng' ) )
+		};
+		if ( nearMeCheckbox ) {
+			nearMeCheckbox.checked = true;
+		}
+		if ( nearMeRadiusSelect && urlParams.get( 'radius_km' ) ) {
+			nearMeRadiusSelect.value = urlParams.get( 'radius_km' );
+		}
+	}
 
 	function populateFilterOptions() {
 		var sets = {};
@@ -125,13 +174,25 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		}
 
 		var categories = selectedCategories();
-		if ( ! categories.length ) {
-			return true;
+		if ( categories.length ) {
+			// AND, not OR: a building must offer every selected category, not just any one of them.
+			var matchesCategories = categories.every( function ( category ) {
+				return ( building.category || [] ).indexOf( category ) !== -1;
+			} );
+			if ( ! matchesCategories ) {
+				return false;
+			}
 		}
-		// AND, not OR: a building must offer every selected category, not just any one of them.
-		return categories.every( function ( category ) {
-			return ( building.category || [] ).indexOf( category ) !== -1;
-		} );
+
+		if ( nearMeCheckbox && nearMeCheckbox.checked && nearMeCoords ) {
+			var radiusKm = nearMeRadiusSelect ? parseFloat( nearMeRadiusSelect.value ) : 25;
+			var distanceKm = haversineKm( nearMeCoords.lat, nearMeCoords.lng, building.lat, building.lng );
+			if ( distanceKm > radiusKm ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	function render() {
@@ -166,6 +227,18 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		.then( function ( data ) {
 			allBuildings = data;
 			populateFilterOptions();
+
+			if ( pendingRegionName && filters.region ) {
+				filters.region.value = pendingRegionName; // no-op if that name never became an <option>
+			}
+			if ( pendingCategoryNames.length && filters.category ) {
+				filters.category.querySelectorAll( 'input[type="checkbox"]' ).forEach( function ( cb ) {
+					if ( pendingCategoryNames.indexOf( cb.value ) !== -1 ) {
+						cb.checked = true;
+					}
+				} );
+			}
+
 			render();
 		} );
 
@@ -174,4 +247,40 @@ document.addEventListener( 'DOMContentLoaded', function () {
 			filters[ key ].addEventListener( 'input', render );
 		}
 	} );
+
+	if ( nearMeRadiusSelect ) {
+		nearMeRadiusSelect.addEventListener( 'change', render );
+	}
+	if ( nearMeCheckbox ) {
+		nearMeCheckbox.addEventListener( 'change', function () {
+			if ( ! nearMeCheckbox.checked ) {
+				render();
+				return;
+			}
+			if ( nearMeCoords ) { // already have coords (e.g. arrived via URL) — just re-render
+				render();
+				return;
+			}
+			if ( ! navigator.geolocation ) {
+				nearMeStatusEl.hidden = false;
+				nearMeStatusEl.textContent = cosMapData.nearMeLabels.unsupported;
+				nearMeCheckbox.checked = false;
+				return;
+			}
+			nearMeStatusEl.hidden = false;
+			nearMeStatusEl.textContent = cosMapData.nearMeLabels.locating;
+			navigator.geolocation.getCurrentPosition(
+				function ( position ) {
+					nearMeCoords = { lat: position.coords.latitude, lng: position.coords.longitude };
+					nearMeStatusEl.hidden = true;
+					render();
+				},
+				function () {
+					nearMeStatusEl.textContent = cosMapData.nearMeLabels.denied;
+					nearMeCheckbox.checked = false;
+					render();
+				}
+			);
+		} );
+	}
 } );

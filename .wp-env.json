@@ -5,7 +5,6 @@
 		"https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip",
 		"https://downloads.wordpress.org/plugin/advanced-custom-fields.latest-stable.zip",
 		"https://downloads.wordpress.org/plugin/complianz-gdpr.latest-stable.zip",
-		"https://downloads.wordpress.org/plugin/seo-by-rank-math.latest-stable.zip",
 		"./wp-content/plugins/cos-core"
 	],
 	"themes": [

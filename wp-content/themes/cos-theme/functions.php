@@ -196,6 +196,7 @@ function cos_enqueue_assets() {
 	$is_map_page       = cos_is_page_any_lang( 'map' );
 	$is_term_page      = is_tax( array( 'cos_region', 'cos_category' ) );
 	$is_building_page  = is_singular( array( 'cos_building', 'cos_listing' ) );
+	$is_front_page     = is_front_page();
 
 	if ( $is_map_page || $is_term_page || $is_building_page ) {
 		wp_enqueue_style( 'leaflet', COS_THEME_URI . '/assets/vendor/leaflet/leaflet.css', array(), '1.9.4' );
@@ -205,10 +206,31 @@ function cos_enqueue_assets() {
 	if ( $is_map_page ) {
 		wp_enqueue_script( 'cos-map', COS_THEME_URI . '/assets/js/map.js', array( 'leaflet' ), cos_asset_version( '/assets/js/map.js' ), true );
 
+		$map_regions     = get_terms( array( 'taxonomy' => 'cos_region', 'hide_empty' => false ) );
+		$map_categories  = get_terms( array( 'taxonomy' => 'cos_category', 'hide_empty' => false ) );
+
+		// html_entity_decode to match the map-data REST endpoint's term_names(),
+		// which decodes term names (e.g. "Food &amp; Drink" -> "Food & Drink") —
+		// the values these slug maps resolve to must match what populateFilterOptions()
+		// actually put in the <option>/checkbox values client-side, or the lookup silently fails.
+		$map_region_names    = array_map( 'html_entity_decode', wp_list_pluck( $map_regions, 'name', 'slug' ) );
+		$map_category_names  = array_map( 'html_entity_decode', wp_list_pluck( $map_categories, 'name', 'slug' ) );
+
 		wp_localize_script( 'cos-map', 'cosMapData', array(
 			'endpoint'         => esc_url_raw( add_query_arg( 'lang', $is_sv ? 'sv' : 'en', rest_url( 'cos-core/v1/map-data' ) ) ),
 			'buildingsLabel'   => $is_sv ? __( 'destinationer', 'cos-theme' ) : __( 'destinations', 'cos-theme' ),
 			'viewDetailsLabel' => $is_sv ? __( 'Visa detaljer', 'cos-theme' ) : __( 'View details', 'cos-theme' ),
+			'regions'          => $map_region_names,
+			'categories'       => $map_category_names,
+			'nearMeLabels'     => $is_sv ? array(
+				'locating'    => __( 'Söker plats…', 'cos-theme' ),
+				'denied'      => __( 'Kunde inte hämta din plats.', 'cos-theme' ),
+				'unsupported' => __( 'Platsdelning stöds inte i din webbläsare.', 'cos-theme' ),
+			) : array(
+				'locating'    => __( 'Locating…', 'cos-theme' ),
+				'denied'      => __( 'Could not get your location.', 'cos-theme' ),
+				'unsupported' => __( 'Location isn\'t supported in your browser.', 'cos-theme' ),
+			),
 		) );
 	}
 
@@ -227,6 +249,23 @@ function cos_enqueue_assets() {
 
 	if ( is_singular( 'cos_listing' ) && get_post_meta( get_the_ID(), 'cos_listing_gallery', true ) ) {
 		wp_enqueue_script( 'cos-gallery-lightbox', COS_THEME_URI . '/assets/js/gallery-lightbox.js', array(), cos_asset_version( '/assets/js/gallery-lightbox.js' ), true );
+	}
+
+	if ( $is_front_page ) {
+		wp_enqueue_script( 'cos-hero-search', COS_THEME_URI . '/assets/js/hero-search.js', array(), cos_asset_version( '/assets/js/hero-search.js' ), true );
+
+		wp_localize_script( 'cos-hero-search', 'cosHeroSearchData', array(
+			'mapUrl' => esc_url( home_url( $is_sv ? '/sv/karta/' : '/map/' ) ),
+			'labels' => $is_sv ? array(
+				'locating'    => __( 'Söker plats…', 'cos-theme' ),
+				'denied'      => __( 'Kunde inte hämta din plats. Kontrollera platsbehörigheten eller välj ett landskap istället.', 'cos-theme' ),
+				'unsupported' => __( 'Platsdelning stöds inte i din webbläsare.', 'cos-theme' ),
+			) : array(
+				'locating'    => __( 'Locating…', 'cos-theme' ),
+				'denied'      => __( 'Could not get your location. Check your location permissions or choose a region instead.', 'cos-theme' ),
+				'unsupported' => __( 'Location isn\'t supported in your browser.', 'cos-theme' ),
+			),
+		) );
 	}
 
 	// Sitewide: every page has the nav search trigger (and its overlay), not just /search/ and the homepage hero.

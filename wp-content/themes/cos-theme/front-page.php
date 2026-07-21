@@ -3,14 +3,14 @@ get_header();
 $is_sv = 'sv' === COS_Language_Routing::current_lang();
 ?>
 
-<section class="hero" style="background-image: linear-gradient(90deg, rgba(30,26,20,0.7) 0%, rgba(30,26,20,0.35) 65%), url('<?php echo esc_url( COS_THEME_URI . '/assets/images/hero.jpg' ); ?>');">
+<section class="hero" style="background-image: linear-gradient(90deg, rgba(20,17,13,0.8) 0%, rgba(20,17,13,0.45) 80%), url('<?php echo esc_url( COS_THEME_URI . '/assets/images/hero2.jpg' ); ?>');">
 	<div class="container">
 		<h1>
 			<?php
 			if ( $is_sv ) {
-				esc_html_e( 'Din guide till Sveriges slott, herrgårdar och palats', 'cos-theme' );
+				esc_html_e( 'Hitta din nästa drömdestination', 'cos-theme' );
 			} else {
-				esc_html_e( 'Your Guide to Sweden\'s Castles, Manors & Palaces', 'cos-theme' );
+				esc_html_e( 'Find your next dream destination', 'cos-theme' );
 			}
 			?>
 		</h1>
@@ -24,16 +24,42 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 			?>
 		</p>
 
-		<div class="cos-search cos-search--destinations">
-			<form class="cos-search__form" action="<?php echo esc_url( home_url( $is_sv ? '/sv/' : '/' ) ); ?>" method="get" role="search">
-				<input type="search" name="s" class="cos-search__input" placeholder="<?php echo esc_attr( $is_sv ? 'Hitta din nästa destination...' : 'Find your next destination...' ); ?>" autocomplete="off">
-				<button type="submit" class="button"><?php echo esc_html( $is_sv ? 'Sök' : 'Search' ); ?></button>
-			</form>
-			<div class="cos-search__results" hidden></div>
-		</div>
+		<div class="hero-search" id="hero-search">
+			<p class="hero-search__legend"><?php echo esc_html( $is_sv ? 'Vart vill du åka?' : 'Where are you?' ); ?></p>
+			<div class="hero-search__where">
+				<button type="button" class="button hero-search__near-me" id="hero-near-me" aria-pressed="false">
+					<?php cos_pin_icon_svg(); ?>
+					<span class="hero-search__near-me-label"><?php echo esc_html( $is_sv ? 'Använd min plats' : 'Use my location' ); ?></span>
+				</button>
+				<span class="hero-search__or"><?php echo esc_html( $is_sv ? 'eller' : 'or' ); ?></span>
+				<select class="button hero-search__region" id="hero-region" name="region">
+					<option value=""><?php echo esc_html( $is_sv ? 'Välj landskap' : 'Choose a region' ); ?></option>
+					<?php
+					$hero_regions = get_terms( array( 'taxonomy' => 'cos_region', 'hide_empty' => false ) );
+					foreach ( $hero_regions as $term ) :
+						?>
+						<option value="<?php echo esc_attr( $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<p class="hero-search__status" id="hero-near-me-status" aria-live="polite" hidden></p>
 
-		<div class="hero__actions">
-			<a class="button" href="<?php echo esc_url( home_url( $is_sv ? '/sv/karta/' : '/map/' ) ); ?>"><?php echo esc_html( $is_sv ? 'Visa interaktiv karta' : 'View Interactive Map' ); ?></a>
+			<fieldset class="hero-search__categories">
+				<legend class="hero-search__legend"><?php echo esc_html( $is_sv ? 'Vad vill du göra?' : 'What would you like to do?' ); ?></legend>
+				<div class="hero-search__checkbox-grid">
+					<?php
+					$hero_categories = get_terms( array( 'taxonomy' => 'cos_category', 'hide_empty' => false ) );
+					foreach ( $hero_categories as $term ) :
+						?>
+						<label class="hero-search__checkbox">
+							<input type="checkbox" name="category[]" value="<?php echo esc_attr( $term->slug ); ?>">
+							<span><?php echo esc_html( $term->name ); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</div>
+			</fieldset>
+
+			<button type="button" class="button hero-search__submit" id="hero-search-submit"><?php echo esc_html( $is_sv ? 'Upptäck destinationer' : 'Discover destinations' ); ?></button>
 		</div>
 	</div>
 </section>
@@ -79,27 +105,30 @@ if ( $latest_articles->have_posts() ) :
 endif;
 ?>
 
-<section class="section section--beige">
-	<div class="container">
-		<h2>
-			<?php
-			if ( $is_sv ) {
-				esc_html_e( 'Hitta din nästa destination', 'cos-theme' );
-			} else {
-				esc_html_e( 'Find your next destination', 'cos-theme' );
-			}
-			?>
-		</h2>
-		<div class="tile-grid">
-			<?php
-			$categories = get_terms( array( 'taxonomy' => 'cos_category', 'hide_empty' => true ) );
-			foreach ( $categories as $term ) :
-				cos_image_tile( $term, cos_tile_image_url( 'categories', cos_term_image_slug( $term ) ) );
-			endforeach;
-			?>
+<?php
+$latest_listings = new WP_Query( array(
+	'post_type'      => 'cos_listing',
+	'posts_per_page' => 4,
+) );
+if ( $latest_listings->have_posts() ) :
+	?>
+	<section class="section section--beige">
+		<div class="container">
+			<h2>
+				<?php echo esc_html( $is_sv ? 'Till salu' : 'For sale' ); ?>
+			</h2>
+			<div class="card-grid">
+				<?php while ( $latest_listings->have_posts() ) : $latest_listings->the_post(); ?>
+					<?php cos_listing_card( get_the_ID() ); ?>
+				<?php endwhile; ?>
+			</div>
+			<a class="button" href="<?php echo esc_url( home_url( $is_sv ? '/sv/till-salu/' : '/for-sale/' ) ); ?>"><?php echo esc_html( $is_sv ? 'Se alla objekt' : 'View all listings' ); ?></a>
 		</div>
-	</div>
-</section>
+	</section>
+	<?php
+	wp_reset_postdata();
+endif;
+?>
 
 <section class="member-section">
 	<div class="member-section__image" style="background-image: url('<?php echo esc_url( COS_THEME_URI . '/assets/images/become-a-member.jpg' ); ?>');"></div>

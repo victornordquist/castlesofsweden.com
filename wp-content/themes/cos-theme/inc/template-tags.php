@@ -4,6 +4,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Inline map-pin SVG, matching the stroke-currentColor convention used by
+ * the footer social icons and header search icon. Shared by the homepage
+ * "Use my location" button and the Map page's near-me filter checkbox.
+ */
+function cos_pin_icon_svg( $size = 18 ) {
+	printf(
+		'<svg width="%1$d" height="%1$d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>',
+		(int) $size
+	);
+}
+
+/**
  * Renders a card linking to a permalink — the whole card is one clickable
  * link. Shared by any plain post-like listing (news, search result groups).
  */
