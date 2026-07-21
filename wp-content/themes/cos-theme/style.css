@@ -636,6 +636,16 @@ input[type="submit"]:hover {
 	gap: 6px;
 	margin-top: 6px;
 }
+/* Activities/Facilities are open-ended lists that'll keep growing, unlike
+   the small curated Category set — capped and scrollable so a long list
+   doesn't push the rest of the filters (and the map itself) far down the
+   sidebar. */
+#cos-map-activity,
+#cos-map-feature {
+	max-height: 160px;
+	overflow-y: auto;
+	padding-right: 4px;
+}
 .map-filters .map-filters__checkbox {
 	display: flex;
 	align-items: center;

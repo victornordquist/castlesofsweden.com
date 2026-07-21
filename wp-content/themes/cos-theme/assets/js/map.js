@@ -49,13 +49,19 @@ document.addEventListener( 'DOMContentLoaded', function () {
 	map.addLayer( markerGroup );
 
 	var allBuildings = [];
-	var filterKeys = [ 'region', 'type', 'category', 'style', 'era' ];
+	var filterKeys = [ 'region', 'type', 'category', 'activity', 'feature', 'style', 'era' ];
+	// These render/behave as checkbox groups (multi-select, AND-matched) rather
+	// than a single <select> — a building can offer several categories,
+	// activities, or features at once.
+	var checkboxKeys = [ 'category', 'activity', 'feature' ];
 
 	var filters = {
 		search: document.getElementById( 'cos-map-search' ),
 		region: document.getElementById( 'cos-map-region' ),
 		type: document.getElementById( 'cos-map-type' ),
 		category: document.getElementById( 'cos-map-category' ),
+		activity: document.getElementById( 'cos-map-activity' ),
+		feature: document.getElementById( 'cos-map-feature' ),
 		style: document.getElementById( 'cos-map-style' ),
 		era: document.getElementById( 'cos-map-era' )
 	};
@@ -122,9 +128,9 @@ document.addEventListener( 'DOMContentLoaded', function () {
 			}
 			var values = Object.keys( sets[ key ] ).sort( svCollator.compare );
 
-			if ( 'category' === key ) {
+			if ( checkboxKeys.indexOf( key ) !== -1 ) {
 				values.forEach( function ( value, index ) {
-					var id = 'cos-map-category-' + index;
+					var id = 'cos-map-' + key + '-' + index;
 
 					var wrapper = document.createElement( 'label' );
 					wrapper.className = 'map-filters__checkbox';
@@ -151,8 +157,9 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		} );
 	}
 
-	function selectedCategories() {
-		var checked = filters.category ? filters.category.querySelectorAll( 'input:checked' ) : [];
+	function selectedCheckboxValues( key ) {
+		var container = filters[ key ];
+		var checked = container ? container.querySelectorAll( 'input:checked' ) : [];
 		return Array.prototype.map.call( checked, function ( checkbox ) { return checkbox.value; } );
 	}
 
@@ -173,15 +180,20 @@ document.addEventListener( 'DOMContentLoaded', function () {
 			return false;
 		}
 
-		var categories = selectedCategories();
-		if ( categories.length ) {
-			// AND, not OR: a building must offer every selected category, not just any one of them.
-			var matchesCategories = categories.every( function ( category ) {
-				return ( building.category || [] ).indexOf( category ) !== -1;
-			} );
-			if ( ! matchesCategories ) {
-				return false;
+		// AND, not OR, both within and across category/activity/feature: a
+		// building must offer every value checked in every group, not just
+		// any one of them.
+		var matchesCheckboxGroups = checkboxKeys.every( function ( key ) {
+			var selected = selectedCheckboxValues( key );
+			if ( ! selected.length ) {
+				return true;
 			}
+			return selected.every( function ( value ) {
+				return ( building[ key ] || [] ).indexOf( value ) !== -1;
+			} );
+		} );
+		if ( ! matchesCheckboxGroups ) {
+			return false;
 		}
 
 		if ( nearMeCheckbox && nearMeCheckbox.checked && nearMeCoords ) {
@@ -255,7 +267,7 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		} );
 
 	Object.keys( filters ).forEach( function ( key ) {
-		if ( filters[ key ] && 'category' !== key ) {
+		if ( filters[ key ] && checkboxKeys.indexOf( key ) === -1 ) {
 			filters[ key ].addEventListener( 'input', render );
 		}
 	} );

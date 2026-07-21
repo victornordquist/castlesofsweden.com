@@ -61,6 +61,8 @@ class COS_REST_Map_Endpoint {
 				'region'    => self::term_names( $post->ID, 'cos_region' ),
 				'type'      => self::term_names( $post->ID, 'cos_building_type' ),
 				'category'  => self::term_names( $post->ID, 'cos_category' ),
+				'activity'  => self::term_names( $post->ID, 'cos_activity' ),
+				'feature'   => self::term_names( $post->ID, 'cos_feature' ),
 				'style'     => self::term_names( $post->ID, 'cos_architectural_style' ),
 				'era'       => self::term_names( $post->ID, 'cos_era' ),
 				'permalink' => get_permalink( $post ),

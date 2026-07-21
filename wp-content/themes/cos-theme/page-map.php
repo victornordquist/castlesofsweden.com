@@ -24,6 +24,14 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 			<span class="map-filters__group-label"><?php echo esc_html( $is_sv ? 'Kategori' : 'Category' ); ?></span>
 			<div id="cos-map-category" class="map-filters__checkbox-group"></div>
 		</div>
+		<div class="map-filters__group">
+			<span class="map-filters__group-label"><?php echo esc_html( $is_sv ? 'Aktiviteter' : 'Activities' ); ?></span>
+			<div id="cos-map-activity" class="map-filters__checkbox-group"></div>
+		</div>
+		<div class="map-filters__group">
+			<span class="map-filters__group-label"><?php echo esc_html( $is_sv ? 'Faciliteter' : 'Facilities' ); ?></span>
+			<div id="cos-map-feature" class="map-filters__checkbox-group"></div>
+		</div>
 		<label>
 			<?php echo esc_html( $is_sv ? 'Arkitektonisk stil' : 'Architectural Style' ); ?>
 			<select id="cos-map-style"><option value=""><?php echo esc_html( $is_sv ? 'Alla stilar' : 'All styles' ); ?></option></select>

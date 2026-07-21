@@ -8,6 +8,8 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	$region        = get_the_terms( $post_id, 'cos_region' );
 	$building_type = get_the_terms( $post_id, 'cos_building_type' );
 	$categories    = get_the_terms( $post_id, 'cos_category' );
+	$activities    = get_the_terms( $post_id, 'cos_activity' );
+	$features      = get_the_terms( $post_id, 'cos_feature' );
 	$style         = get_the_terms( $post_id, 'cos_architectural_style' );
 	$era           = get_the_terms( $post_id, 'cos_era' );
 
@@ -110,6 +112,18 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 							<div class="building-info-box__row">
 								<dt><?php echo esc_html( $is_sv ? 'Kategorier' : 'Categories' ); ?></dt>
 								<dd><?php echo esc_html( implode( ', ', wp_list_pluck( $categories, 'name' ) ) ); ?></dd>
+							</div>
+						<?php endif; ?>
+						<?php if ( ! is_wp_error( $activities ) && $activities ) : ?>
+							<div class="building-info-box__row">
+								<dt><?php echo esc_html( $is_sv ? 'Aktiviteter' : 'Activities' ); ?></dt>
+								<dd><?php echo esc_html( implode( ', ', wp_list_pluck( $activities, 'name' ) ) ); ?></dd>
+							</div>
+						<?php endif; ?>
+						<?php if ( ! is_wp_error( $features ) && $features ) : ?>
+							<div class="building-info-box__row">
+								<dt><?php echo esc_html( $is_sv ? 'Faciliteter' : 'Facilities' ); ?></dt>
+								<dd><?php echo esc_html( implode( ', ', wp_list_pluck( $features, 'name' ) ) ); ?></dd>
 							</div>
 						<?php endif; ?>
 						<?php if ( ! is_wp_error( $style ) && $style ) : ?>
