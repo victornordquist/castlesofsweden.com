@@ -198,12 +198,14 @@ document.addEventListener( 'DOMContentLoaded', function () {
 	function render() {
 		markerGroup.clearLayers();
 		var count = 0;
+		var matchedCoords = [];
 
 		allBuildings.forEach( function ( building ) {
 			if ( ! matchesFilters( building ) ) {
 				return;
 			}
 			count++;
+			matchedCoords.push( [ building.lat, building.lng ] );
 
 			var marker = L.marker( [ building.lat, building.lng ], { icon: photoMarkerIcon( building.thumbnail ) } );
 			var popupHtml = '';
@@ -219,6 +221,16 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		var counter = document.getElementById( 'cos-map-count' );
 		if ( counter ) {
 			counter.textContent = count + ' ' + cosMapData.buildingsLabel;
+		}
+
+		// Keep the view in sync with whatever's actually showing — e.g. picking
+		// a region zooms/centers on that region's buildings. maxZoom caps how
+		// far a single (or tightly clustered) match zooms in, since fitBounds
+		// on one point alone would otherwise go to the map's max zoom level.
+		if ( matchedCoords.length ) {
+			map.fitBounds( matchedCoords, { padding: [ 40, 40 ], maxZoom: 13 } );
+		} else {
+			map.setView( [ 62.0, 15.5 ], 5 );
 		}
 	}
 

@@ -660,8 +660,8 @@ input[type="submit"]:hover {
 }
 @media (max-width: 860px) {
 	.map-page { flex-direction: column; }
-	.map-filters { width: 100%; }
-	#cos-map { height: 500px; }
+	.map-filters { width: 100%; order: 1; }
+	#cos-map { height: 500px; order: -1; }
 }
 
 /* ---------- Visit directory ---------- */
