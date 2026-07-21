@@ -239,53 +239,58 @@ function cos_journal_card( $post_id ) {
 }
 
 /**
- * Curated top-level Journal categories, in display order. Each must exist as
- * a 'category' term; any missing slug is silently skipped so the site doesn't
- * break if one is renamed or deleted from the admin.
+ * Top-level 'category' terms that should never appear in the Journal
+ * subnav even though they're real top-level categories — News is surfaced
+ * elsewhere (e.g. the homepage's Latest Articles), and Uncategorized is
+ * WordPress's default fallback bucket, not an editorial category.
  */
-const COS_JOURNAL_TOP_CATEGORIES = array(
-	'gardens-interiors',
-	'architecture',
-	'history',
-	'life-style',
-	'art-culture',
-	'royals',
-);
+const COS_JOURNAL_EXCLUDED_CATEGORIES = array( 'news', 'uncategorized' );
 
 /**
- * Secondary Journal navigation: the curated top-level categories above, each
- * with a hover dropdown of its subcategories (if any). Rendered on the
- * Journal overview (below the page title bar) and on single article pages
- * (below the main site header).
+ * Secondary Journal navigation: every top-level 'category' term (in the
+ * current site language — get_categories() is already language-filtered by
+ * COS_Language_Routing::apply_term_language_filter()) except the ones
+ * listed above, each with a hover dropdown of its subcategories (if any).
+ * New top-level categories appear here automatically, no code change
+ * needed. Rendered on the Journal overview (below the page title bar) and
+ * on single article pages (below the main site header).
  */
 function cos_journal_subnav() {
 	$is_sv = 'sv' === COS_Language_Routing::current_lang();
+
+	$excluded_ids = array();
+	foreach ( COS_JOURNAL_EXCLUDED_CATEGORIES as $slug ) {
+		// cos_lang_filter=false so this always resolves the canonical
+		// English term by its hardcoded slug regardless of site language;
+		// its Swedish pair (if any) is then excluded too, below.
+		$en_terms = get_terms( array(
+			'taxonomy'        => 'category',
+			'slug'            => $slug,
+			'hide_empty'      => false,
+			'cos_lang_filter' => false,
+		) );
+		$term = ( ! is_wp_error( $en_terms ) && $en_terms ) ? $en_terms[0] : null;
+		if ( ! $term ) {
+			continue;
+		}
+		$excluded_ids[] = $term->term_id;
+		$paired_id = (int) get_term_meta( $term->term_id, 'cos_translation_id', true );
+		if ( $paired_id ) {
+			$excluded_ids[] = $paired_id;
+		}
+	}
+
+	$top_categories = get_categories( array(
+		'taxonomy'   => 'category',
+		'parent'     => 0,
+		'hide_empty' => false,
+		'exclude'    => $excluded_ids,
+	) );
 	?>
 	<nav class="journal-subnav" aria-label="<?php echo esc_attr( $is_sv ? 'Magasinkategorier' : 'Journal categories' ); ?>">
 		<div class="container">
 			<ul>
-				<?php foreach ( COS_JOURNAL_TOP_CATEGORIES as $slug ) :
-					// cos_lang_filter=false bypasses the language filter so this
-					// always resolves the canonical English term by its hardcoded
-					// slug, regardless of site language — it's then swapped for
-					// its Swedish pair below when needed.
-					$en_terms = get_terms( array(
-						'taxonomy'        => 'category',
-						'slug'            => $slug,
-						'hide_empty'      => false,
-						'cos_lang_filter' => false,
-					) );
-					$term = ( ! is_wp_error( $en_terms ) && $en_terms ) ? $en_terms[0] : null;
-					if ( ! $term ) {
-						continue;
-					}
-					if ( $is_sv ) {
-						$paired_id = (int) get_term_meta( $term->term_id, 'cos_translation_id', true );
-						$paired    = $paired_id ? get_term( $paired_id, 'category' ) : null;
-						if ( $paired && ! is_wp_error( $paired ) ) {
-							$term = $paired;
-						}
-					}
+				<?php foreach ( $top_categories as $term ) :
 					$children = get_categories( array( 'parent' => $term->term_id, 'hide_empty' => false ) );
 					?>
 					<li class="<?php echo $children ? 'has-children' : ''; ?>">
