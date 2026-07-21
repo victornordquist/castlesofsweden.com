@@ -17,9 +17,9 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 		<p class="hero__intro">
 			<?php
 			if ( $is_sv ) {
-				esc_html_e( 'Planera ditt nästa besök till Sveriges mest ikoniska och natursköna kulturhistoriska besöksmål. Oavsett om du drömmer om en weekendresa, ett sagolikt bröllop eller vill följa i kungars och drottningars fotspår – här finns något för dig.', 'cos-theme' );
+				esc_html_e( 'Utforska Sveriges mest ikoniska och natursköna kulturhistoriska besöksmål. Oavsett om du drömmer om en weekendresa, ett sagolikt bröllop eller vill följa i kungars och drottningars fotspår – här finns något för dig.', 'cos-theme' );
 			} else {
-				esc_html_e( 'Plan your next visit to Sweden\'s most iconic and scenic heritage sites. Whether you are dreaming of a weekend escape, a fairytale wedding, or to follow in the footsteps of kings and queens — there\'s something here for you.', 'cos-theme' );
+				esc_html_e( 'Explore Sweden\'s most iconic and scenic heritage sites. Whether you are dreaming of a weekend escape, a fairytale wedding, or to follow in the footsteps of kings and queens — there\'s something here for you.', 'cos-theme' );
 			}
 			?>
 		</p>
@@ -78,9 +78,9 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 		<p>
 			<?php
 			if ( $is_sv ) {
-				esc_html_e( 'I vårt magasin utforskar vi arkitektur, historia, trädgårdar och interiörer, konst och kultur, kungligheter samt en tidlös livsstil. Upptäck idéerna, historien och människorna som har format – och fortfarande formar – dessa unika kulturmiljöer, och fördjupa din förståelse för Sveriges rika kulturarv.', 'cos-theme' );
+				esc_html_e( 'I vårt magasin utforskar vi arkitektur, historia, trädgårdar och interiörer, konst och kultur, kungligheter samt en tidlös livsstil. Upptäck idéerna, historien och människorna som har format, och fortfarande formar, dessa unika kulturmiljöer och fördjupa din förståelse för Sveriges rika kulturarv.', 'cos-theme' );
 			} else {
-				esc_html_e( 'The Journal explores architecture, history, gardens & interiors, art & culture, royals and timeless lifestyle. Uncover the ideas, histories and people that shaped and continue to shape these remarkable landmarks — and gain a deeper understanding of Sweden\'s rich heritage.', 'cos-theme' );
+				esc_html_e( 'The Journal explores architecture, history, gardens & interiors, art & culture, royals and timeless lifestyle. Uncover the ideas, histories and people that shaped, and continue to shape, these remarkable landmarks and gain a deeper understanding of Sweden\'s rich heritage.', 'cos-theme' );
 			}
 			?>
 		</p>
