@@ -19,6 +19,28 @@ function cos_taxonomy_archive_query( $query ) {
 add_action( 'pre_get_posts', 'cos_taxonomy_archive_query' );
 
 /**
+ * Sold listings get their own "Sold" section rendered separately below the
+ * live ones (see archive-cos_listing.php), so the main For Sale archive
+ * query excludes them here instead of showing/paginating them twice.
+ * Appends to whatever meta_query already exists (e.g. the language filter's)
+ * rather than overwriting it.
+ */
+function cos_exclude_sold_from_listing_archive( $query ) {
+	if ( is_admin() || ! $query->is_main_query() || ! is_post_type_archive( 'cos_listing' ) ) {
+		return;
+	}
+	$meta_query   = $query->get( 'meta_query' );
+	$meta_query   = is_array( $meta_query ) ? $meta_query : array();
+	$meta_query[] = array(
+		'relation' => 'OR',
+		array( 'key' => 'cos_listing_sold', 'compare' => 'NOT EXISTS' ),
+		array( 'key' => 'cos_listing_sold', 'value' => '1', 'compare' => '!=' ),
+	);
+	$query->set( 'meta_query', $meta_query );
+}
+add_action( 'pre_get_posts', 'cos_exclude_sold_from_listing_archive' );
+
+/**
  * Fixed brand-level primary navigation.
  * Homepage is reached via the clickable logo, not a nav item.
  */

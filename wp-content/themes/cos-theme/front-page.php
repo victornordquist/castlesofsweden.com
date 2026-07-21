@@ -109,6 +109,13 @@ endif;
 $latest_listings = new WP_Query( array(
 	'post_type'      => 'cos_listing',
 	'posts_per_page' => 4,
+	'meta_query'     => array(
+		array(
+			'relation' => 'OR',
+			array( 'key' => 'cos_listing_sold', 'compare' => 'NOT EXISTS' ),
+			array( 'key' => 'cos_listing_sold', 'value' => '1', 'compare' => '!=' ),
+		),
+	),
 ) );
 if ( $latest_listings->have_posts() ) :
 	?>

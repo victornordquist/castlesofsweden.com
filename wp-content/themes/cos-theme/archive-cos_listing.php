@@ -39,4 +39,26 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	<?php endif; ?>
 </div>
 
+<?php
+$sold_listings = new WP_Query( array(
+	'post_type'      => 'cos_listing',
+	'posts_per_page' => -1,
+	'meta_key'       => 'cos_listing_sold',
+	'meta_value'     => '1',
+) );
+if ( $sold_listings->have_posts() ) :
+	?>
+	<div class="container section section--beige">
+		<h2><?php echo esc_html( $is_sv ? 'Sålda objekt' : 'Sold' ); ?></h2>
+		<div class="card-grid">
+			<?php while ( $sold_listings->have_posts() ) : $sold_listings->the_post(); ?>
+				<?php cos_listing_card( get_the_ID() ); ?>
+			<?php endwhile; ?>
+		</div>
+	</div>
+	<?php
+	wp_reset_postdata();
+endif;
+?>
+
 <?php get_footer(); ?>

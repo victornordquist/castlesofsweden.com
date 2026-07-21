@@ -9,6 +9,7 @@ class COS_Listing_Meta_Fields {
 	 * meta key => [ label, type, sanitize_callback ]
 	 */
 	const LISTING_FIELDS = array(
+		'cos_listing_sold'          => array( 'Sold', 'boolean', 'rest_sanitize_boolean' ),
 		'cos_listing_price_sek'     => array( 'Price (SEK)', 'integer', 'absint' ),
 		'cos_listing_location'      => array( 'Location', 'string', 'sanitize_text_field' ),
 		'cos_listing_building_size' => array( 'Building Size (m²)', 'number', array( __CLASS__, 'sanitize_float' ) ),
@@ -143,6 +144,15 @@ class COS_Listing_Meta_Fields {
 		echo '<table class="form-table"><tbody>';
 		foreach ( self::LISTING_FIELDS as $key => list( $label, $type ) ) {
 			$value = get_post_meta( $post->ID, $key, true );
+			if ( 'boolean' === $type ) {
+				printf(
+					'<tr><th><label for="%1$s">%2$s</label></th><td><input type="checkbox" id="%1$s" name="%1$s" value="1" %3$s /></td></tr>',
+					esc_attr( $key ),
+					esc_html( $label ),
+					checked( $value, true, false )
+				);
+				continue;
+			}
 			printf(
 				'<tr><th><label for="%1$s">%2$s</label></th><td><input type="text" id="%1$s" name="%1$s" value="%3$s" class="regular-text" /></td></tr>',
 				esc_attr( $key ),
@@ -162,6 +172,14 @@ class COS_Listing_Meta_Fields {
 			return;
 		}
 		foreach ( self::LISTING_FIELDS as $key => list( $label, $type, $sanitize ) ) {
+			if ( 'boolean' === $type ) {
+				// Unchecked checkboxes submit no field at all, unlike every
+				// other input type here — isset() alone would never be able
+				// to record "turned off", so this branch treats a missing
+				// key as an explicit false rather than skipping the save.
+				update_post_meta( $post_id, $key, isset( $_POST[ $key ] ) ? 1 : 0 );
+				continue;
+			}
 			if ( ! isset( $_POST[ $key ] ) ) {
 				continue;
 			}

@@ -9,6 +9,7 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	$building_size = get_post_meta( $post_id, 'cos_listing_building_size', true );
 	$land_size     = get_post_meta( $post_id, 'cos_listing_land_size', true );
 	$price_sek     = (int) get_post_meta( $post_id, 'cos_listing_price_sek', true );
+	$is_sold       = (bool) get_post_meta( $post_id, 'cos_listing_sold', true );
 	$image_credit  = get_post_meta( $post_id, 'cos_listing_image_credit', true );
 	$broker_name   = get_post_meta( $post_id, 'cos_listing_broker_name', true );
 	$broker_url    = get_post_meta( $post_id, 'cos_listing_broker_url', true );
@@ -26,6 +27,9 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 			style="background-image: linear-gradient(90deg, rgba(30,26,20,0.6) 0%, rgba(30,26,20,0.15) 65%), url('<?php echo esc_url( $thumbnail_url ); ?>');"
 		<?php endif; ?>
 	>
+		<?php if ( $is_sold ) : ?>
+			<span class="page-title-bar__badge"><?php echo esc_html( $is_sv ? 'Sålt' : 'Sold' ); ?></span>
+		<?php endif; ?>
 		<div class="container">
 			<h1><?php the_title(); ?></h1>
 			<?php if ( $location ) : ?>

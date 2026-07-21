@@ -113,6 +113,7 @@ function cos_listing_card( $post_id ) {
 	$building_size = get_post_meta( $post_id, 'cos_listing_building_size', true );
 	$land_size     = get_post_meta( $post_id, 'cos_listing_land_size', true );
 	$price_sek     = (int) get_post_meta( $post_id, 'cos_listing_price_sek', true );
+	$is_sold       = (bool) get_post_meta( $post_id, 'cos_listing_sold', true );
 
 	$size_parts = array();
 	if ( $building_size ) {
@@ -134,8 +135,11 @@ function cos_listing_card( $post_id ) {
 		}
 	}
 	?>
-	<a class="card listing-card" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
+	<a class="card listing-card<?php echo $is_sold ? ' listing-card--sold' : ''; ?>" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
 		<div class="card__image">
+			<?php if ( $is_sold ) : ?>
+				<span class="listing-card__badge"><?php echo esc_html( $is_sv ? 'Sålt' : 'Sold' ); ?></span>
+			<?php endif; ?>
 			<?php echo get_the_post_thumbnail( $post_id, 'medium', array( 'alt' => get_the_title( $post_id ) ) ); ?>
 		</div>
 		<div class="card__body">
