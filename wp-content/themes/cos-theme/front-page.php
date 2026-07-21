@@ -17,9 +17,9 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 		<p class="hero__intro">
 			<?php
 			if ( $is_sv ) {
-				esc_html_e( 'Utforska Sveriges mest ikoniska och natursköna kulturhistoriska besöksmål. Oavsett om du drömmer om en weekendresa, ett sagolikt bröllop eller vill följa i kungars och drottningars fotspår – här finns något för dig.', 'cos-theme' );
+				esc_html_e( 'Utforska Sveriges mest ikoniska slott, palats och herrgårdar. Oavsett om du planerar en weekendresa, drömmer om ett sagolikt bröllop eller följer i kungars och drottningars fotspår, hittar du din nästa oförglömliga destination här.', 'cos-theme' );
 			} else {
-				esc_html_e( 'Explore Sweden\'s most iconic and scenic heritage sites. Whether you are dreaming of a weekend escape, a fairytale wedding, or to follow in the footsteps of kings and queens — there\'s something here for you.', 'cos-theme' );
+				esc_html_e( 'Explore Sweden\'s most iconic castles, palaces and manor houses. Whether you\'re planning a weekend escape, dreaming of a fairytale wedding, or following in the footsteps of kings and queens, you\'ll find your next unforgettable destination here.', 'cos-theme' );
 			}
 			?>
 		</p>
