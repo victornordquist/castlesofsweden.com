@@ -31,7 +31,7 @@ function cos_primary_nav_links() {
 	$is_sv = 'sv' === COS_Language_Routing::current_lang();
 
 	return array(
-		array( 'label' => $is_sv ? 'Destinationer' : 'Visit', 'url' => home_url( $is_sv ? '/sv/besok/' : '/visit/' ) ),
+		array( 'label' => $is_sv ? 'Destinationer' : 'Destinations', 'url' => home_url( $is_sv ? '/sv/besok/' : '/visit/' ) ),
 		array( 'label' => $is_sv ? 'Karta' : 'Map', 'url' => home_url( $is_sv ? '/sv/karta/' : '/map/' ) ),
 		array( 'label' => $is_sv ? 'Till salu' : 'For Sale', 'url' => home_url( $is_sv ? '/sv/till-salu/' : '/for-sale/' ) ),
 		array( 'label' => $is_sv ? 'Magasinet' : 'The Journal', 'url' => home_url( $is_sv ? '/sv/magasinet/' : '/journal/' ) ),
