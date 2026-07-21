@@ -20,18 +20,27 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 			<?php echo esc_html( $is_sv ? 'Byggnadstyp' : 'Building Type' ); ?>
 			<select id="cos-map-type"><option value=""><?php echo esc_html( $is_sv ? 'Alla typer' : 'All types' ); ?></option></select>
 		</label>
-		<div class="map-filters__group">
-			<span class="map-filters__group-label"><?php echo esc_html( $is_sv ? 'Kategori' : 'Category' ); ?></span>
+		<details class="map-filters__group map-filters__group--collapsible">
+			<summary class="map-filters__group-label">
+				<?php echo esc_html( $is_sv ? 'Kategori' : 'Category' ); ?>
+				<?php cos_chevron_icon_svg( 'map-filters__group-chevron' ); ?>
+			</summary>
 			<div id="cos-map-category" class="map-filters__checkbox-group"></div>
-		</div>
-		<div class="map-filters__group">
-			<span class="map-filters__group-label"><?php echo esc_html( $is_sv ? 'Aktiviteter' : 'Activities' ); ?></span>
+		</details>
+		<details class="map-filters__group map-filters__group--collapsible">
+			<summary class="map-filters__group-label">
+				<?php echo esc_html( $is_sv ? 'Aktiviteter' : 'Activities' ); ?>
+				<?php cos_chevron_icon_svg( 'map-filters__group-chevron' ); ?>
+			</summary>
 			<div id="cos-map-activity" class="map-filters__checkbox-group"></div>
-		</div>
-		<div class="map-filters__group">
-			<span class="map-filters__group-label"><?php echo esc_html( $is_sv ? 'Faciliteter' : 'Facilities' ); ?></span>
+		</details>
+		<details class="map-filters__group map-filters__group--collapsible">
+			<summary class="map-filters__group-label">
+				<?php echo esc_html( $is_sv ? 'Faciliteter' : 'Facilities' ); ?>
+				<?php cos_chevron_icon_svg( 'map-filters__group-chevron' ); ?>
+			</summary>
 			<div id="cos-map-feature" class="map-filters__checkbox-group"></div>
-		</div>
+		</details>
 		<label>
 			<?php echo esc_html( $is_sv ? 'Arkitektonisk stil' : 'Architectural Style' ); ?>
 			<select id="cos-map-style"><option value=""><?php echo esc_html( $is_sv ? 'Alla stilar' : 'All styles' ); ?></option></select>

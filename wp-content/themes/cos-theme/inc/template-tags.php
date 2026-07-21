@@ -16,6 +16,20 @@ function cos_pin_icon_svg( $size = 18 ) {
 }
 
 /**
+ * Small chevron, same stroke-currentColor convention as cos_pin_icon_svg().
+ * Used as a disclosure indicator next to a <summary> label — pair with
+ * .map-filters__group-chevron (rotates via the parent <details>'s [open]
+ * state) rather than relying on the browser's default <details> marker,
+ * which varies in style across browsers.
+ */
+function cos_chevron_icon_svg( $class = '' ) {
+	printf(
+		'<svg class="%1$s" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>',
+		esc_attr( $class )
+	);
+}
+
+/**
  * Renders a card linking to a permalink — the whole card is one clickable
  * link. Shared by any plain post-like listing (news, search result groups).
  */

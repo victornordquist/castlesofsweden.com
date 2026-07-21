@@ -625,10 +625,28 @@ input[type="submit"]:hover {
 	padding-right: 28px;
 }
 .map-filters__group { margin-bottom: 18px; }
+/* Category/Activities/Facilities are all collapsed-by-default <details>
+   disclosures (native, no JS) — a visible checkbox list, even scrolled,
+   still reads as heavy in the sidebar, and this keeps all three checkbox
+   groups behaving the same way regardless of how many terms they hold. */
 .map-filters__group-label {
-	display: block;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
 	font-size: 0.85rem;
 	font-weight: 600;
+	cursor: pointer;
+	list-style: none;
+}
+.map-filters__group-label::-webkit-details-marker { display: none; }
+.map-filters__group-chevron {
+	color: var(--color-text-muted);
+	transition: transform 0.15s ease;
+	flex-shrink: 0;
+}
+.map-filters__group--collapsible[open] .map-filters__group-chevron {
+	transform: rotate(180deg);
 }
 .map-filters__checkbox-group {
 	display: flex;
@@ -639,7 +657,7 @@ input[type="submit"]:hover {
 /* Activities/Facilities are open-ended lists that'll keep growing, unlike
    the small curated Category set — capped and scrollable so a long list
    doesn't push the rest of the filters (and the map itself) far down the
-   sidebar. */
+   sidebar even while expanded. */
 #cos-map-activity,
 #cos-map-feature {
 	max-height: 160px;
