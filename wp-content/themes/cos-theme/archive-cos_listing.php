@@ -48,14 +48,16 @@ $sold_listings = new WP_Query( array(
 ) );
 if ( $sold_listings->have_posts() ) :
 	?>
-	<div class="container section section--beige">
-		<h2><?php echo esc_html( $is_sv ? 'Sålda objekt' : 'Sold' ); ?></h2>
-		<div class="card-grid">
-			<?php while ( $sold_listings->have_posts() ) : $sold_listings->the_post(); ?>
-				<?php cos_listing_card( get_the_ID() ); ?>
-			<?php endwhile; ?>
+	<section class="section section--beige">
+		<div class="container">
+			<h2><?php echo esc_html( $is_sv ? 'Sålda objekt' : 'Sold' ); ?></h2>
+			<div class="card-grid">
+				<?php while ( $sold_listings->have_posts() ) : $sold_listings->the_post(); ?>
+					<?php cos_listing_card( get_the_ID() ); ?>
+				<?php endwhile; ?>
+			</div>
 		</div>
-	</div>
+	</section>
 	<?php
 	wp_reset_postdata();
 endif;
