@@ -100,6 +100,75 @@ function cos_theme_setup() {
 add_action( 'after_setup_theme', 'cos_theme_setup' );
 
 /**
+ * Open Graph / Twitter Card tags so links shared on Facebook, LinkedIn, X
+ * etc. get a title, description, and image instead of a blank preview.
+ * Uses the post's featured image when there is one; otherwise falls back to
+ * the site-wide share image at assets/images/castlesofsweden-share.png
+ * (1536×1024).
+ */
+function cos_social_share_meta() {
+	if ( is_admin() || is_feed() || is_search() ) {
+		return;
+	}
+
+	$is_sv = 'sv' === COS_Language_Routing::current_lang();
+
+	if ( is_singular() ) {
+		$title       = get_the_title();
+		$excerpt     = get_the_excerpt();
+		$description = $excerpt ? wp_strip_all_tags( $excerpt ) : get_bloginfo( 'description' );
+		$type        = 'post' === get_post_type() ? 'article' : 'website';
+	} elseif ( is_category() || is_tax() ) {
+		$title             = single_term_title( '', false );
+		$term_description  = term_description();
+		$description       = $term_description ? wp_strip_all_tags( $term_description ) : get_bloginfo( 'description' );
+		$type              = 'website';
+	} elseif ( is_front_page() ) {
+		$title       = get_bloginfo( 'name' );
+		$description = get_bloginfo( 'description' );
+		$type        = 'website';
+	} else {
+		$title       = wp_strip_all_tags( wp_get_document_title() );
+		$description = get_bloginfo( 'description' );
+		$type        = 'website';
+	}
+
+	$image_url    = COS_THEME_URI . '/assets/images/castlesofsweden-share.png';
+	$image_width  = 1536;
+	$image_height = 1024;
+
+	if ( is_singular() && has_post_thumbnail() ) {
+		$thumbnail = wp_get_attachment_image_src( get_post_thumbnail_id(), 'large' );
+		if ( $thumbnail ) {
+			list( $image_url, $image_width, $image_height ) = $thumbnail;
+		}
+	}
+
+	$current_url = home_url( wp_unslash( $_SERVER['REQUEST_URI'] ) );
+	?>
+	<meta property="og:type" content="<?php echo esc_attr( $type ); ?>">
+	<meta property="og:site_name" content="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>">
+	<meta property="og:title" content="<?php echo esc_attr( $title ); ?>">
+	<?php if ( $description ) : ?>
+		<meta property="og:description" content="<?php echo esc_attr( $description ); ?>">
+	<?php endif; ?>
+	<meta property="og:url" content="<?php echo esc_url( $current_url ); ?>">
+	<meta property="og:image" content="<?php echo esc_url( $image_url ); ?>">
+	<meta property="og:image:width" content="<?php echo esc_attr( $image_width ); ?>">
+	<meta property="og:image:height" content="<?php echo esc_attr( $image_height ); ?>">
+	<meta property="og:locale" content="<?php echo esc_attr( $is_sv ? 'sv_SE' : 'en_US' ); ?>">
+
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>">
+	<?php if ( $description ) : ?>
+		<meta name="twitter:description" content="<?php echo esc_attr( $description ); ?>">
+	<?php endif; ?>
+	<meta name="twitter:image" content="<?php echo esc_url( $image_url ); ?>">
+	<?php
+}
+add_action( 'wp_head', 'cos_social_share_meta', 1 );
+
+/**
  * Wraps WooCommerce's default archive/single templates in the same
  * .container.section shell used by every other page on the site, instead of
  * WooCommerce's own unstyled wrapper markup.
