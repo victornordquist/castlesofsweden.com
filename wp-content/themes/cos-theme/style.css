@@ -1152,6 +1152,9 @@ body.search-overlay-open { overflow: hidden; }
 .news-article__featured {
 	margin: 0 0 40px;
 }
+.news-article__featured-image {
+	position: relative;
+}
 .news-article__featured img {
 	width: 100%;
 	height: auto;
@@ -1164,6 +1167,15 @@ body.search-overlay-open { overflow: hidden; }
 	color: var(--color-text-muted);
 	margin-top: 10px;
 	text-align: center;
+}
+.news-article__credit {
+	position: absolute;
+	right: 16px;
+	bottom: 10px;
+	margin: 0;
+	font-size: 0.7rem;
+	color: #fff;
+	text-shadow: 0 1px 3px rgba(0,0,0,0.6);
 }
 .news-article__content {
 	max-width: 760px;

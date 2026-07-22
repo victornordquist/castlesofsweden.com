@@ -9,6 +9,7 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	$categories       = get_the_category();
 	$thumbnail_id     = get_post_thumbnail_id();
 	$thumbnail_caption = $thumbnail_id ? get_the_post_thumbnail_caption( $thumbnail_id ) : '';
+	$image_credit     = get_post_meta( get_the_ID(), 'cos_image_credit', true );
 	?>
 
 	<article class="container section news-article">
@@ -44,7 +45,22 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 
 		<?php if ( has_post_thumbnail() ) : ?>
 			<figure class="news-article__featured">
-				<?php the_post_thumbnail( 'large' ); ?>
+				<div class="news-article__featured-image">
+					<?php the_post_thumbnail( 'large' ); ?>
+					<?php if ( $image_credit ) : ?>
+						<p class="news-article__credit">
+							<?php
+							if ( $is_sv ) {
+								/* translators: %s: photo credit */
+								printf( esc_html__( 'Foto: %s', 'cos-theme' ), esc_html( $image_credit ) );
+							} else {
+								/* translators: %s: photo credit */
+								printf( esc_html__( 'Photo: %s', 'cos-theme' ), esc_html( $image_credit ) );
+							}
+							?>
+						</p>
+					<?php endif; ?>
+				</div>
 				<?php if ( $thumbnail_caption ) : ?>
 					<figcaption><?php echo esc_html( $thumbnail_caption ); ?></figcaption>
 				<?php endif; ?>
