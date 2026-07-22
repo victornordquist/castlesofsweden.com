@@ -47,6 +47,14 @@
 						</svg>
 					</a>
 				</li>
+				<li>
+					<a class="nav-saved-icon" href="<?php echo esc_url( home_url( $is_sv ? '/sv/sparade-platser/' : '/saved-places/' ) ); ?>" aria-label="<?php echo esc_attr( $is_sv ? 'Sparade platser' : 'Saved places' ); ?>">
+						<svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+							<path d="M9 15.5 2.6 9.2C0.9 7.5 0.9 4.8 2.6 3.1c1.7-1.7 4.4-1.7 6.1 0L9 3.4l0.3-0.3c1.7-1.7 4.4-1.7 6.1 0 1.7 1.7 1.7 4.4 0 6.1L9 15.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+						</svg>
+						<span class="nav-saved-icon__badge" hidden>0</span>
+					</a>
+				</li>
 				<li><?php cos_render_language_switcher(); ?></li>
 			</ul>
 		</nav>

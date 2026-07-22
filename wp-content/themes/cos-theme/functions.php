@@ -383,6 +383,19 @@ function cos_enqueue_assets() {
 			'viewAll'      => __( 'See all results for "%s"', 'cos-theme' ),
 		),
 	) );
+
+	// Sitewide: the nav's saved-places heart icon needs its count badge kept
+	// up to date on every page, not just where the Save button itself lives.
+	wp_enqueue_script( 'cos-saved-buildings', COS_THEME_URI . '/assets/js/saved-buildings.js', array(), cos_asset_version( '/assets/js/saved-buildings.js' ), true );
+
+	wp_localize_script( 'cos-saved-buildings', 'cosSavedBuildingsData', array(
+		'buildingsEndpoint' => esc_url_raw( rest_url( 'wp/v2/cos_building' ) ),
+		'regionsEndpoint'   => esc_url_raw( rest_url( 'wp/v2/cos_region' ) ),
+		'lang'              => $is_sv ? 'sv' : 'en',
+		'labels'            => array(
+			'empty' => $is_sv ? __( 'Du har inte sparat några platser än.', 'cos-theme' ) : __( 'You haven\'t saved any places yet.', 'cos-theme' ),
+		),
+	) );
 }
 add_action( 'wp_enqueue_scripts', 'cos_enqueue_assets' );
 
