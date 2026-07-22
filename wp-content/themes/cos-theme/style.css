@@ -370,6 +370,16 @@ input[type="submit"]:hover {
 	gap: 16px;
 	flex-wrap: wrap;
 }
+.hero-search__near-me,
+.hero-search__region {
+	background-color: var(--color-beige);
+	color: var(--color-text);
+}
+.hero-search__near-me:hover,
+.hero-search__region:hover {
+	background-color: var(--color-text);
+	color: #fff;
+}
 .hero-search__near-me {
 	display: inline-flex;
 	align-items: center;
@@ -386,13 +396,20 @@ input[type="submit"]:hover {
 	appearance: none;
 	border: none;
 	padding-right: 2.5em;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23333333' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 1.25em center;
+}
+.hero-search__region:hover,
+.hero-search__region.is-active {
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: right 1.25em center;
 }
 .hero-search__near-me.is-active,
 .hero-search__region.is-active {
-	background: var(--color-accent-dark);
+	background-color: var(--color-accent-dark);
+	color: #fff;
 	box-shadow: 0 0 0 2px var(--color-accent-dark) inset;
 }
 .hero-search__near-me[data-state="locating"] { opacity: 0.7; cursor: wait; }
