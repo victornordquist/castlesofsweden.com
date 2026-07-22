@@ -45,16 +45,15 @@ class COS_Language_Fields {
 			add_action( "manage_{$post_type}_posts_custom_column", array( __CLASS__, 'render_language_column' ), 10, 2 );
 		}
 		add_action( 'admin_notices', array( __CLASS__, 'render_bulk_duplicate_notice' ) );
-		add_filter( 'get_terms', array( __CLASS__, 'label_terms_with_language_in_admin' ), 10, 3 );
-		add_filter( 'get_the_terms', array( __CLASS__, 'label_get_the_terms_in_admin' ), 10, 3 );
 		add_filter( 'get_terms_args', array( __CLASS__, 'force_show_empty_terms_in_admin' ), 10, 2 );
-		add_filter( 'terms_to_edit', array( __CLASS__, 'label_quick_edit_terms' ), 10, 2 );
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'render_language_filter_dropdown' ) );
 		add_filter( 'pre_get_posts', array( __CLASS__, 'apply_admin_language_filter' ) );
 
 		foreach ( self::taxonomies() as $taxonomy ) {
 			add_action( "{$taxonomy}_add_form_fields", array( __CLASS__, 'render_term_fields_add' ) );
 			add_action( "{$taxonomy}_edit_form_fields", array( __CLASS__, 'render_term_fields_edit' ) );
+			add_filter( "manage_edit-{$taxonomy}_columns", array( __CLASS__, 'add_term_language_column' ) );
+			add_filter( "manage_{$taxonomy}_custom_column", array( __CLASS__, 'render_term_language_column' ), 10, 3 );
 		}
 		add_action( 'created_term', array( __CLASS__, 'save_term_fields' ), 10, 3 );
 		add_action( 'edited_term', array( __CLASS__, 'save_term_fields' ), 10, 3 );
@@ -411,48 +410,28 @@ class COS_Language_Fields {
 	}
 
 	/**
-	 * Several taxonomies (regions especially — Skåne, Uppland etc. are the
-	 * same word in both languages) end up with an English and Swedish term
-	 * that display identically, making them impossible to tell apart in any
-	 * admin UI that lists term names (the post-edit taxonomy checklist, the
-	 * term list table, quick edit...). Appends "(EN)"/"(SV)" to every
-	 * translatable-taxonomy term's name, admin-side only — never touches
-	 * the front end or the stored term name itself.
+	 * Deliberately does NOT label term names ANYWHERE admin-side — not in
+	 * get_terms(), get_the_terms(), Quick Edit's tag field, or REST. Every
+	 * one of those was tried at some point (see git history) and every one
+	 * turned out to be a real data-corruption vector, not just a cosmetic
+	 * risk: the moment a language label becomes part of a term's *name* in
+	 * any UI a human can read from and then type/paste into ANY other
+	 * name-matching input (a tag field, Quick Edit's own pre-filled tag
+	 * list, a "most used" link), wp_set_object_terms()/wp_insert_term()
+	 * silently create a new orphan term instead of matching the real one —
+	 * confirmed in production for both the classic term-list label and the
+	 * REST label, across three separate incidents. Quick Edit was the
+	 * worst of these: it pre-fills the tag input with the labeled string,
+	 * so simply opening Quick Edit and clicking "Update" without touching
+	 * that field would silently replace a correct assignment with a fresh
+	 * orphan.
+	 *
+	 * Disambiguation (needed for taxonomies like cos_region where an EN/SV
+	 * pair can be spelled identically, e.g. "Skåne") is handled instead by
+	 * add_term_language_column()/render_term_language_column() below — a
+	 * genuinely separate table cell in the classic term-list screen that
+	 * can never be selected/copied as part of the term's name.
 	 */
-	public static function label_terms_with_language_in_admin( $terms, $taxonomies, $args = array() ) {
-		if ( ! is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
-			return $terms;
-		}
-		if ( ! array_intersect( (array) $taxonomies, self::taxonomies() ) ) {
-			return $terms;
-		}
-
-		// 'fields' => 'names' / 'id=>name' is what the tag-suggest AJAX
-		// handler (wp_ajax_ajax_tag_search(), used by every non-hierarchical
-		// taxonomy's autocomplete box) requests. Labeling those specific
-		// strings is unsafe, not just cosmetic: the label becomes part of
-		// the literal text WordPress inserts into the tag input, and on
-		// save wp_set_object_terms() matches tags by exact name — since no
-		// term is actually named e.g. "Palats (SV)", it silently creates a
-		// new orphan term instead of matching the real one. This produced
-		// several unlinked, un-language-tagged duplicate terms in
-		// production. Leave these two formats unlabeled entirely rather
-		// than risk more of them; the disambiguating label still shows up
-		// everywhere else (term list table, Quick Edit's existing-terms
-		// display, the block editor panel), which all resolve terms by ID.
-		if ( ! empty( $args['fields'] ) && in_array( $args['fields'], array( 'names', 'id=>name' ), true ) ) {
-			return $terms;
-		}
-
-		foreach ( $terms as $term ) {
-			if ( ! is_object( $term ) || ! isset( $term->term_id, $term->name ) ) {
-				continue;
-			}
-			$lang = get_term_meta( $term->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
-			$term->name .= ' (' . strtoupper( $lang ) . ')';
-		}
-		return $terms;
-	}
 
 	/**
 	 * Most admin UI that lists terms (tag-suggest autocomplete, the "most
@@ -473,81 +452,23 @@ class COS_Language_Fields {
 		return $args;
 	}
 
-	/**
-	 * The visible per-taxonomy admin column (e.g. "Regions" on the Buildings
-	 * list) is rendered via get_the_terms(), which is its own thin caching
-	 * wrapper with its own separate filter — a cache hit skips the
-	 * get_terms() query (and label_terms_with_language_in_admin()) entirely,
-	 * so that filter alone can't be relied on here regardless of whether
-	 * this specific call is a hit or a miss.
-	 */
-	public static function label_get_the_terms_in_admin( $terms, $post_id, $taxonomy ) {
-		if ( ! is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
-			return $terms;
-		}
-		if ( ! in_array( $taxonomy, self::taxonomies(), true ) || ! is_array( $terms ) ) {
-			return $terms;
-		}
-		foreach ( $terms as $term ) {
-			if ( ! is_object( $term ) || ! isset( $term->term_id, $term->name ) ) {
-				continue;
-			}
-			// Already labeled (e.g. this array came straight from a fresh
-			// get_terms() call that label_terms_with_language_in_admin()
-			// already handled) — don't double up.
-			if ( preg_match( '/\s\((EN|SV)\)$/', $term->name ) ) {
-				continue;
-			}
-			$lang = get_term_meta( $term->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
-			$term->name .= ' (' . strtoupper( $lang ) . ')';
-		}
-		return $terms;
+	public static function add_term_language_column( $columns ) {
+		$columns['cos_language'] = __( 'Language', 'cos-core' );
+		return $columns;
 	}
 
-	/**
-	 * Quick Edit's currently-assigned-terms tag list is populated by
-	 * get_terms_to_edit(), which checks the exact same object-term-
-	 * relationship cache the visible admin column (rendered earlier in the
-	 * same row) has usually already primed — and on that cache hit it
-	 * rebuilds term objects via get_term() per ID, bypassing get_terms()
-	 * and every filter hooked there. That leaves this filter holding only
-	 * an already-flattened, unlabeled name string, with no reliable way to
-	 * tell a same-named EN/SV pair apart from it (e.g. two terms are both
-	 * literally named "Värmland" in the database) — matching by name here
-	 * would find both and have no way to know which one this post actually
-	 * has. Sidestep the string entirely: $post is set by
-	 * WP_Posts_List_Table's row rendering (the same global the neighboring
-	 * template tags like get_the_excerpt() rely on), so re-derive the
-	 * labeled names from get_the_terms(), which label_get_the_terms_in_admin()
-	 * already labels correctly per-term regardless of this same caching
-	 * quirk.
-	 */
-	public static function label_quick_edit_terms( $terms_to_edit, $taxonomy ) {
-		global $post;
-		if ( ! in_array( $taxonomy, self::taxonomies(), true ) || '' === $terms_to_edit || empty( $post ) ) {
-			return $terms_to_edit;
+	public static function render_term_language_column( $content, $column, $term_id ) {
+		if ( 'cos_language' !== $column ) {
+			return $content;
 		}
-		$terms = get_the_terms( $post->ID, $taxonomy );
-		if ( empty( $terms ) || is_wp_error( $terms ) ) {
-			return $terms_to_edit;
-		}
-		return esc_attr( implode( ',', wp_list_pluck( $terms, 'name' ) ) );
+		$lang        = get_term_meta( $term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
+		$badge_color = 'sv' === $lang ? '#2271b1' : '#646970';
+		return sprintf(
+			'<span style="display:inline-block;padding:2px 8px;border-radius:3px;background:%s;color:#fff;font-size:11px;font-weight:600;letter-spacing:0.5px;">%s</span>',
+			esc_attr( $badge_color ),
+			esc_html( strtoupper( $lang ) )
+		);
 	}
-
-	/**
-	 * Deliberately does NOT label term names in the REST API response the
-	 * way label_terms_with_language_in_admin() does for the classic admin
-	 * screens. The block editor's "Add New Category" (and equivalent
-	 * taxonomy-panel) flows create terms by literal name over REST —
-	 * wp_insert_term() only dedupes on an exact name match, so an appended
-	 * " (SV)" label that isn't part of any real term's name doesn't get
-	 * caught as a duplicate; it silently creates a new orphan term instead
-	 * (e.g. typing/selecting "Bröllop (SV)" created a real term with that
-	 * name, slugged "brollop-sv", alongside the actual "Bröllop" term).
-	 * Same failure class as the tag-suggest bug in
-	 * label_terms_with_language_in_admin() — a cosmetic label leaking into
-	 * a context WordPress treats as authoritative for name-matching.
-	 */
 
 	public static function duplicate_post_as_translation( $post_id ) {
 		$source = get_post( $post_id );
