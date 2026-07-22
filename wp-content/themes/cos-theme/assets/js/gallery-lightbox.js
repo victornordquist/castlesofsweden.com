@@ -1,10 +1,10 @@
 ( function () {
-	var gallery = document.querySelector( '.listing-gallery__grid' );
+	var gallery = document.querySelector( '.photo-gallery__grid' );
 	if ( ! gallery ) {
 		return;
 	}
 
-	var links = Array.prototype.slice.call( gallery.querySelectorAll( '.listing-gallery__item' ) );
+	var links = Array.prototype.slice.call( gallery.querySelectorAll( '.photo-gallery__item' ) );
 	var index = 0;
 
 	var overlay = document.createElement( 'div' );

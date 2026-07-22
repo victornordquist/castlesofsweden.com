@@ -131,9 +131,9 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	</div>
 
 	<?php if ( ! empty( $gallery_ids ) ) : ?>
-		<div class="container section listing-gallery">
-			<h2 class="listing-gallery__title"><?php echo esc_html( $is_sv ? 'Bildgalleri' : 'Photo Gallery' ); ?></h2>
-			<div class="listing-gallery__grid">
+		<div class="container section photo-gallery">
+			<h2 class="photo-gallery__title"><?php echo esc_html( $is_sv ? 'Bildgalleri' : 'Photo Gallery' ); ?></h2>
+			<div class="photo-gallery__grid">
 				<?php foreach ( $gallery_ids as $gallery_id ) :
 					$full  = wp_get_attachment_image_src( $gallery_id, 'full' );
 					$thumb = wp_get_attachment_image_src( $gallery_id, 'medium_large' );
@@ -141,7 +141,7 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 						continue;
 					}
 					?>
-					<a href="<?php echo esc_url( $full[0] ); ?>" class="listing-gallery__item">
+					<a href="<?php echo esc_url( $full[0] ); ?>" class="photo-gallery__item">
 						<img src="<?php echo esc_url( $thumb[0] ); ?>" alt="<?php echo esc_attr( get_the_title() ); ?>" loading="lazy" />
 					</a>
 				<?php endforeach; ?>
