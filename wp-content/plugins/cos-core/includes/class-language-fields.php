@@ -48,9 +48,6 @@ class COS_Language_Fields {
 		add_filter( 'get_terms', array( __CLASS__, 'label_terms_with_language_in_admin' ), 10, 3 );
 		add_filter( 'get_the_terms', array( __CLASS__, 'label_get_the_terms_in_admin' ), 10, 3 );
 		add_filter( 'get_terms_args', array( __CLASS__, 'force_show_empty_terms_in_admin' ), 10, 2 );
-		foreach ( self::taxonomies() as $taxonomy ) {
-			add_filter( "rest_prepare_{$taxonomy}", array( __CLASS__, 'label_term_language_in_rest' ), 10, 2 );
-		}
 		add_filter( 'terms_to_edit', array( __CLASS__, 'label_quick_edit_terms' ), 10, 2 );
 		add_action( 'restrict_manage_posts', array( __CLASS__, 'render_language_filter_dropdown' ) );
 		add_filter( 'pre_get_posts', array( __CLASS__, 'apply_admin_language_filter' ) );
@@ -538,23 +535,19 @@ class COS_Language_Fields {
 	}
 
 	/**
-	 * Same labeling as label_terms_with_language_in_admin(), for the block
-	 * editor's taxonomy panel — it fetches terms via the REST API, a
-	 * separate request where is_admin() is always false even when the
-	 * request originates from a logged-in editor session.
+	 * Deliberately does NOT label term names in the REST API response the
+	 * way label_terms_with_language_in_admin() does for the classic admin
+	 * screens. The block editor's "Add New Category" (and equivalent
+	 * taxonomy-panel) flows create terms by literal name over REST —
+	 * wp_insert_term() only dedupes on an exact name match, so an appended
+	 * " (SV)" label that isn't part of any real term's name doesn't get
+	 * caught as a duplicate; it silently creates a new orphan term instead
+	 * (e.g. typing/selecting "Bröllop (SV)" created a real term with that
+	 * name, slugged "brollop-sv", alongside the actual "Bröllop" term).
+	 * Same failure class as the tag-suggest bug in
+	 * label_terms_with_language_in_admin() — a cosmetic label leaking into
+	 * a context WordPress treats as authoritative for name-matching.
 	 */
-	public static function label_term_language_in_rest( $response, $term ) {
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			return $response;
-		}
-		$lang = get_term_meta( $term->term_id, self::LANG_META_KEY, true ) ?: self::DEFAULT_LANG;
-		$data = $response->get_data();
-		if ( isset( $data['name'] ) ) {
-			$data['name'] .= ' (' . strtoupper( $lang ) . ')';
-			$response->set_data( $data );
-		}
-		return $response;
-	}
 
 	public static function duplicate_post_as_translation( $post_id ) {
 		$source = get_post( $post_id );
