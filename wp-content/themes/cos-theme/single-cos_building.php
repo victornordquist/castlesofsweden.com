@@ -14,6 +14,7 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	$era           = get_the_terms( $post_id, 'cos_era' );
 
 	$english_name  = get_post_meta( $post_id, 'cos_english_name', true );
+	$tagline       = get_post_meta( $post_id, 'cos_tagline', true );
 	$architects    = get_post_meta( $post_id, 'cos_architects', true );
 	$builder       = get_post_meta( $post_id, 'cos_builder', true );
 	$year_built    = get_post_meta( $post_id, 'cos_year_built', true );
@@ -31,16 +32,31 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	?>
 
 	<div
-		class="page-title-bar page-title-bar--image<?php echo $thumbnail_url ? '' : ' page-title-bar--placeholder'; ?>"
+		class="page-title-bar page-title-bar--image page-title-bar--building<?php echo $thumbnail_url ? '' : ' page-title-bar--placeholder'; ?>"
 		<?php if ( $thumbnail_url ) : ?>
 			style="background-image: linear-gradient(90deg, rgba(30,26,20,0.6) 0%, rgba(30,26,20,0.15) 65%), url('<?php echo esc_url( $thumbnail_url ); ?>');"
 		<?php endif; ?>
 	>
 		<div class="container">
 			<h1><?php the_title(); ?></h1>
-			<?php if ( $english_name && $english_name !== get_the_title() ) : ?>
-				<p class="page-title-bar__english-name"><?php echo esc_html( $english_name ); ?></p>
+			<?php if ( $tagline ) : ?>
+				<p class="page-title-bar__tagline"><?php echo esc_html( $tagline ); ?></p>
 			<?php endif; ?>
+			<div class="page-title-bar__actions">
+				<?php if ( $website_url ) : ?>
+					<a class="button" href="<?php echo esc_url( $website_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $is_sv ? 'Officiell webbplats' : 'Official website' ); ?></a>
+				<?php endif; ?>
+				<?php if ( $map_link ) : ?>
+					<a class="button button--outline" href="<?php echo esc_url( $map_link ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $is_sv ? 'Vägbeskrivning' : 'How to get here' ); ?></a>
+				<?php endif; ?>
+				<button
+					type="button"
+					class="button button--outline save-building-button"
+					data-save-building-id="<?php echo esc_attr( $post_id ); ?>"
+					data-label-save="<?php echo esc_attr( $is_sv ? 'Spara' : 'Save' ); ?>"
+					data-label-saved="<?php echo esc_attr( $is_sv ? 'Sparad' : 'Saved' ); ?>"
+				><?php echo esc_html( $is_sv ? 'Spara' : 'Save' ); ?></button>
+			</div>
 		</div>
 		<?php if ( $image_credit ) : ?>
 			<p class="page-title-bar__credit">
@@ -164,11 +180,9 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 						<?php endif; ?>
 					</dl>
 
-					<?php if ( $website_url || $map_link || $instagram_url ) : ?>
+					<?php if ( $instagram_url ) : ?>
 						<div class="building-info-box__actions">
-							<?php if ( $website_url ) : ?><a class="button" href="<?php echo esc_url( $website_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $is_sv ? 'Officiell webbplats' : 'Official website' ); ?></a><?php endif; ?>
-							<?php if ( $map_link ) : ?><a class="button" href="<?php echo esc_url( $map_link ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $is_sv ? 'Vägbeskrivning' : 'How to get here' ); ?></a><?php endif; ?>
-							<?php if ( $instagram_url ) : ?><a href="<?php echo esc_url( $instagram_url ); ?>" target="_blank" rel="noopener">Instagram</a><?php endif; ?>
+							<a href="<?php echo esc_url( $instagram_url ); ?>" target="_blank" rel="noopener">Instagram</a>
 						</div>
 					<?php endif; ?>
 				</div>

@@ -10,6 +10,7 @@ class COS_Meta_Fields {
 	 */
 	const BUILDING_FIELDS = array(
 		'cos_english_name'    => array( 'English Name', 'string', 'sanitize_text_field' ),
+		'cos_tagline'         => array( 'Tagline', 'string', 'sanitize_text_field' ),
 		'cos_architects'      => array( 'Architect(s)', 'string', 'sanitize_text_field' ),
 		'cos_builder'         => array( 'Builder', 'string', 'sanitize_text_field' ),
 		'cos_year_built'      => array( 'Year Built', 'integer', 'absint' ),
