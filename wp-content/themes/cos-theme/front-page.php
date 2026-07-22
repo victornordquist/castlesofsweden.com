@@ -3,7 +3,7 @@ get_header();
 $is_sv = 'sv' === COS_Language_Routing::current_lang();
 ?>
 
-<section class="hero" style="background-image: linear-gradient(90deg, rgba(20,17,13,0.8) 0%, rgba(20,17,13,0.45) 80%), url('<?php echo esc_url( COS_THEME_URI . '/assets/images/hero2.jpg' ); ?>');">
+<section class="hero" style="background-image: linear-gradient(90deg, rgba(20,17,13,0.8) 0%, rgba(20,17,13,0.45) 80%), url('<?php echo esc_url( COS_THEME_URI . '/assets/images/hero3.jpg' ); ?>');">
 	<div class="container">
 		<h1>
 			<?php
