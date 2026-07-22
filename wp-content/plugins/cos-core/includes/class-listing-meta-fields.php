@@ -104,37 +104,37 @@ class COS_Listing_Meta_Fields {
 		}
 		wp_enqueue_media();
 		wp_enqueue_script(
-			'cos-listing-gallery-admin',
-			COS_CORE_URL . 'assets/js/admin-listing-gallery.js',
+			'cos-gallery-picker-admin',
+			COS_CORE_URL . 'assets/js/admin-gallery-picker.js',
 			array( 'jquery' ),
-			filemtime( COS_CORE_DIR . 'assets/js/admin-listing-gallery.js' ),
+			filemtime( COS_CORE_DIR . 'assets/js/admin-gallery-picker.js' ),
 			true
 		);
 		wp_enqueue_style(
-			'cos-listing-gallery-admin',
-			COS_CORE_URL . 'assets/css/admin-listing-gallery.css',
+			'cos-gallery-picker-admin',
+			COS_CORE_URL . 'assets/css/admin-gallery-picker.css',
 			array(),
-			filemtime( COS_CORE_DIR . 'assets/css/admin-listing-gallery.css' )
+			filemtime( COS_CORE_DIR . 'assets/css/admin-gallery-picker.css' )
 		);
 	}
 
 	public static function render_gallery_meta_box( $post ) {
 		$ids = (array) get_post_meta( $post->ID, self::GALLERY_META_KEY, true );
 		?>
-		<div id="cos-listing-gallery">
-			<ul class="cos-listing-gallery__list">
+		<div class="cos-gallery-picker" data-title="<?php esc_attr_e( 'Select gallery images', 'cos-core' ); ?>" data-button-text="<?php esc_attr_e( 'Add to gallery', 'cos-core' ); ?>">
+			<ul class="cos-gallery-picker__list">
 				<?php foreach ( $ids as $id ) : ?>
 					<?php $thumb = wp_get_attachment_image_src( $id, 'thumbnail' ); ?>
 					<?php if ( $thumb ) : ?>
-						<li class="cos-listing-gallery__item" data-id="<?php echo esc_attr( $id ); ?>">
+						<li class="cos-gallery-picker__item" data-id="<?php echo esc_attr( $id ); ?>">
 							<img src="<?php echo esc_url( $thumb[0] ); ?>" alt="" />
-							<button type="button" class="cos-listing-gallery__remove" aria-label="<?php esc_attr_e( 'Remove image', 'cos-core' ); ?>">&times;</button>
+							<button type="button" class="cos-gallery-picker__remove" aria-label="<?php esc_attr_e( 'Remove image', 'cos-core' ); ?>">&times;</button>
 						</li>
 					<?php endif; ?>
 				<?php endforeach; ?>
 			</ul>
-			<input type="hidden" id="cos_listing_gallery" name="cos_listing_gallery" value="<?php echo esc_attr( implode( ',', $ids ) ); ?>" />
-			<button type="button" class="button" id="cos-listing-gallery-add"><?php esc_html_e( 'Add Images', 'cos-core' ); ?></button>
+			<input type="hidden" class="cos-gallery-picker__input" name="cos_listing_gallery" value="<?php echo esc_attr( implode( ',', $ids ) ); ?>" />
+			<button type="button" class="button cos-gallery-picker__add"><?php esc_html_e( 'Add Images', 'cos-core' ); ?></button>
 		</div>
 		<?php
 	}

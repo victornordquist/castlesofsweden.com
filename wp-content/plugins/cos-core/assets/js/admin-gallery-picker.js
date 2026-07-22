@@ -1,10 +1,12 @@
 ( function ( $ ) {
 	'use strict';
 
-	$( function () {
-		var $wrap  = $( '#cos-listing-gallery' );
-		var $list  = $wrap.find( '.cos-listing-gallery__list' );
-		var $input = $wrap.find( '#cos_listing_gallery' );
+	function initPicker( $wrap ) {
+		var $list  = $wrap.find( '.cos-gallery-picker__list' );
+		var $input = $wrap.find( '.cos-gallery-picker__input' );
+		var $add   = $wrap.find( '.cos-gallery-picker__add' );
+		var title  = $wrap.data( 'title' ) || 'Select gallery images';
+		var button = $wrap.data( 'button-text' ) || 'Add to gallery';
 		var frame;
 
 		function currentIds() {
@@ -28,14 +30,14 @@
 				? attachment.sizes.thumbnail.url
 				: attachment.url;
 
-			var $item = $( '<li class="cos-listing-gallery__item"></li>' ).attr( 'data-id', attachment.id );
+			var $item = $( '<li class="cos-gallery-picker__item"></li>' ).attr( 'data-id', attachment.id );
 			$item.append( $( '<img />' ).attr( 'src', thumbUrl ) );
-			$item.append( $( '<button type="button" class="cos-listing-gallery__remove" aria-label="Remove image">&times;</button>' ) );
+			$item.append( $( '<button type="button" class="cos-gallery-picker__remove" aria-label="Remove image">&times;</button>' ) );
 			$list.append( $item );
 		}
 
-		$wrap.on( 'click', '.cos-listing-gallery__remove', function () {
-			var $item = $( this ).closest( '.cos-listing-gallery__item' );
+		$wrap.on( 'click', '.cos-gallery-picker__remove', function () {
+			var $item = $( this ).closest( '.cos-gallery-picker__item' );
 			var id    = String( $item.data( 'id' ) );
 			setIds( currentIds().filter( function ( existingId ) {
 				return existingId !== id;
@@ -43,7 +45,7 @@
 			$item.remove();
 		} );
 
-		$( '#cos-listing-gallery-add' ).on( 'click', function ( e ) {
+		$add.on( 'click', function ( e ) {
 			e.preventDefault();
 
 			if ( frame ) {
@@ -52,8 +54,8 @@
 			}
 
 			frame = wp.media( {
-				title: 'Select gallery images',
-				button: { text: 'Add to gallery' },
+				title: title,
+				button: { text: button },
 				multiple: true,
 			} );
 
@@ -64,6 +66,12 @@
 			} );
 
 			frame.open();
+		} );
+	}
+
+	$( function () {
+		$( '.cos-gallery-picker' ).each( function () {
+			initPicker( $( this ) );
 		} );
 	} );
 } )( jQuery );

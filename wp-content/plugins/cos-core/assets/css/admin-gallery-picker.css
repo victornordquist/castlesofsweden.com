@@ -1,4 +1,4 @@
-.cos-listing-gallery__list {
+.cos-gallery-picker__list {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 10px;
@@ -7,13 +7,13 @@
 	list-style: none;
 }
 
-.cos-listing-gallery__item {
+.cos-gallery-picker__item {
 	position: relative;
 	width: 100px;
 	height: 100px;
 }
 
-.cos-listing-gallery__item img {
+.cos-gallery-picker__item img {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
@@ -21,7 +21,7 @@
 	border: 1px solid #ccd0d4;
 }
 
-.cos-listing-gallery__remove {
+.cos-gallery-picker__remove {
 	position: absolute;
 	top: -8px;
 	right: -8px;

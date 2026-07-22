@@ -338,7 +338,9 @@ function cos_enqueue_assets() {
 		wp_enqueue_script( 'cos-building-map', COS_THEME_URI . '/assets/js/building-map.js', array( 'leaflet' ), cos_asset_version( '/assets/js/building-map.js' ), true );
 	}
 
-	if ( is_singular( 'cos_listing' ) && get_post_meta( get_the_ID(), 'cos_listing_gallery', true ) ) {
+	$has_listing_gallery  = is_singular( 'cos_listing' ) && get_post_meta( get_the_ID(), 'cos_listing_gallery', true );
+	$has_building_gallery = is_singular( 'cos_building' ) && get_post_meta( get_the_ID(), 'cos_building_gallery', true );
+	if ( $has_listing_gallery || $has_building_gallery ) {
 		wp_enqueue_script( 'cos-gallery-lightbox', COS_THEME_URI . '/assets/js/gallery-lightbox.js', array(), cos_asset_version( '/assets/js/gallery-lightbox.js' ), true );
 	}
 
