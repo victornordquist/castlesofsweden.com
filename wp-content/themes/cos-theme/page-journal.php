@@ -51,10 +51,10 @@ if ( $featured_query->have_posts() ) {
 						<?php
 						if ( $is_sv ) {
 							/* translators: %s: author name */
-							printf( esc_html__( 'Text av %s', 'cos-theme' ), esc_html( get_the_author() ) );
+							printf( esc_html__( 'Text av %s', 'cos-theme' ), esc_html( cos_journal_author_name( $featured_id ) ) );
 						} else {
 							/* translators: %s: author name */
-							printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( get_the_author() ) );
+							printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( cos_journal_author_name( $featured_id ) ) );
 						}
 						?>
 					</p>

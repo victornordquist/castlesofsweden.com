@@ -1197,6 +1197,41 @@ body.search-overlay-open { overflow: hidden; }
 	display: block;
 }
 
+.journal-author-box {
+	display: flex;
+	align-items: flex-start;
+	gap: 18px;
+	max-width: 760px;
+	margin: 48px auto 0;
+	padding-top: 32px;
+	border-top: 1px solid rgba(0,0,0,0.08);
+}
+.journal-author-box__avatar img {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	object-fit: cover;
+	display: block;
+}
+.journal-author-box__label {
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: var(--color-accent-dark);
+	margin-bottom: 4px;
+}
+.journal-author-box__name {
+	font-family: var(--font-heading);
+	font-size: 1.1rem;
+	margin-bottom: 6px;
+}
+.journal-author-box__bio {
+	font-size: 0.9rem;
+	line-height: 1.6;
+	color: var(--color-text-muted);
+}
+
 /* ---------- Journal category sub-nav ---------- */
 .journal-subnav {
 	background: var(--color-bg);

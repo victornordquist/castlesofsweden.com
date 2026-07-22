@@ -1,0 +1,14 @@
+.cos-image-picker__preview {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 8px;
+}
+
+.cos-image-picker__preview img {
+	width: 80px;
+	height: 80px;
+	object-fit: cover;
+	border-radius: 50%;
+	border: 1px solid #ccd0d4;
+}

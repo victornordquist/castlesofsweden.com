@@ -27,14 +27,14 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 					printf(
 						/* translators: 1: author name, 2: publish date */
 						esc_html__( 'Text av %1$s · %2$s', 'cos-theme' ),
-						esc_html( get_the_author() ),
+						esc_html( cos_journal_author_name( get_the_ID() ) ),
 						esc_html( get_the_date() )
 					);
 				} else {
 					printf(
 						/* translators: 1: author name, 2: publish date */
 						esc_html__( 'Words by %1$s · %2$s', 'cos-theme' ),
-						esc_html( get_the_author() ),
+						esc_html( cos_journal_author_name( get_the_ID() ) ),
 						esc_html( get_the_date() )
 					);
 				}
@@ -54,6 +54,8 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 		<div class="news-article__content">
 			<?php the_content(); ?>
 		</div>
+
+		<?php cos_journal_author_box( get_the_ID() ); ?>
 	</article>
 <?php endwhile; ?>
 

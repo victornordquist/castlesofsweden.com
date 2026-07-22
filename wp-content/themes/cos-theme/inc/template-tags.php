@@ -223,6 +223,63 @@ function cos_image_tile( $term, $image_url, $count_label = '' ) {
 }
 
 /**
+ * Byline name for a Journal article: the guest-author override
+ * (COS_Author_Meta_Fields, set via the "Guest Author" meta box) if present,
+ * otherwise the WordPress user assigned as post author. Lets an editor
+ * credit a contributor who has no WP user account.
+ */
+function cos_journal_author_name( $post_id ) {
+	$guest_name = get_post_meta( $post_id, COS_Author_Meta_Fields::NAME_META_KEY, true );
+	if ( $guest_name ) {
+		return $guest_name;
+	}
+	return get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) );
+}
+
+/**
+ * End-of-article author box: photo, name, and bio. Prefers the guest-author
+ * override fields; falls back to the WP author's own avatar/description so
+ * the box still renders sensibly for posts with no guest author set. Skips
+ * entirely if there's no name to show.
+ */
+function cos_journal_author_box( $post_id ) {
+	$author_id = (int) get_post_field( 'post_author', $post_id );
+
+	$guest_name  = get_post_meta( $post_id, COS_Author_Meta_Fields::NAME_META_KEY, true );
+	$guest_bio   = get_post_meta( $post_id, COS_Author_Meta_Fields::BIO_META_KEY, true );
+	$guest_image = (int) get_post_meta( $post_id, COS_Author_Meta_Fields::IMAGE_META_KEY, true );
+
+	$name = $guest_name ? $guest_name : get_the_author_meta( 'display_name', $author_id );
+	$bio  = $guest_bio ? $guest_bio : get_the_author_meta( 'description', $author_id );
+
+	if ( ! $name ) {
+		return;
+	}
+
+	$is_sv = 'sv' === COS_Language_Routing::current_lang();
+	?>
+	<div class="journal-author-box">
+		<div class="journal-author-box__avatar">
+			<?php
+			if ( $guest_image ) {
+				echo wp_get_attachment_image( $guest_image, 'thumbnail', false, array( 'alt' => $name ) );
+			} else {
+				echo get_avatar( $author_id, 96, '', $name );
+			}
+			?>
+		</div>
+		<div class="journal-author-box__body">
+			<p class="journal-author-box__label"><?php echo esc_html( $is_sv ? 'Skriven av' : 'Written by' ); ?></p>
+			<p class="journal-author-box__name"><?php echo esc_html( $name ); ?></p>
+			<?php if ( $bio ) : ?>
+				<p class="journal-author-box__bio"><?php echo esc_html( $bio ); ?></p>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php
+}
+
+/**
  * Renders a Journal article card for the 3-up grid on the Journal overview:
  * category first (styled like the featured article's category label), then
  * title, then byline — no date.
@@ -244,10 +301,10 @@ function cos_journal_card( $post_id ) {
 				<?php
 				if ( $is_sv ) {
 					/* translators: %s: author name */
-					printf( esc_html__( 'Text av %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+					printf( esc_html__( 'Text av %s', 'cos-theme' ), esc_html( cos_journal_author_name( $post_id ) ) );
 				} else {
 					/* translators: %s: author name */
-					printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+					printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( cos_journal_author_name( $post_id ) ) );
 				}
 				?>
 			</p>
@@ -353,10 +410,10 @@ function cos_front_journal_card( $post_id ) {
 				<?php
 				if ( $is_sv ) {
 					/* translators: %s: author name */
-					printf( esc_html__( 'Text av %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+					printf( esc_html__( 'Text av %s', 'cos-theme' ), esc_html( cos_journal_author_name( $post_id ) ) );
 				} else {
 					/* translators: %s: author name */
-					printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( get_the_author_meta( 'display_name', get_post_field( 'post_author', $post_id ) ) ) );
+					printf( esc_html__( 'Words by %s', 'cos-theme' ), esc_html( cos_journal_author_name( $post_id ) ) );
 				}
 				?>
 			</p>
