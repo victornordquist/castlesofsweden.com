@@ -1218,12 +1218,18 @@ body.search-overlay-open { overflow: hidden; }
 	padding-top: 32px;
 	border-top: 1px solid rgba(0,0,0,0.08);
 }
+.journal-author-box__avatar {
+	flex-shrink: 0;
+}
 .journal-author-box__avatar img {
 	width: 64px;
 	height: 64px;
 	border-radius: 50%;
 	object-fit: cover;
 	display: block;
+}
+.journal-author-box__body {
+	min-width: 0;
 }
 .journal-author-box__label {
 	text-transform: uppercase;

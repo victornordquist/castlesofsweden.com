@@ -244,19 +244,30 @@ function cos_journal_author_name( $post_id ) {
  */
 function cos_journal_author_box( $post_id ) {
 	$author_id = (int) get_post_field( 'post_author', $post_id );
+	$is_sv     = 'sv' === COS_Language_Routing::current_lang();
 
 	$guest_name  = get_post_meta( $post_id, COS_Author_Meta_Fields::NAME_META_KEY, true );
 	$guest_bio   = get_post_meta( $post_id, COS_Author_Meta_Fields::BIO_META_KEY, true );
 	$guest_image = (int) get_post_meta( $post_id, COS_Author_Meta_Fields::IMAGE_META_KEY, true );
 
 	$name = $guest_name ? $guest_name : get_the_author_meta( 'display_name', $author_id );
-	$bio  = $guest_bio ? $guest_bio : get_the_author_meta( 'description', $author_id );
+
+	// The per-post guest bio is already language-correct (EN/SV Journal
+	// articles are separate paired posts), but the WP-user fallback bio
+	// (Biographical Info) is a single global field with no language variant
+	// of its own — prefer the user's separate Swedish bio field for that
+	// fallback specifically, so it doesn't show English bio text on /sv/ pages.
+	if ( $guest_bio ) {
+		$bio = $guest_bio;
+	} elseif ( $is_sv && get_user_meta( $author_id, COS_User_Avatar::BIO_SV_META_KEY, true ) ) {
+		$bio = get_user_meta( $author_id, COS_User_Avatar::BIO_SV_META_KEY, true );
+	} else {
+		$bio = get_the_author_meta( 'description', $author_id );
+	}
 
 	if ( ! $name ) {
 		return;
 	}
-
-	$is_sv = 'sv' === COS_Language_Routing::current_lang();
 	?>
 	<div class="journal-author-box">
 		<div class="journal-author-box__avatar">

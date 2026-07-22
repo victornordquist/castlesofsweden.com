@@ -5,14 +5,23 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Lets a registered WP user (or an admin editing their profile) upload a
- * local photo as their avatar. Hooks into pre_get_avatar_data so it's picked
- * up by every core get_avatar()/get_avatar_url() call — Journal author
- * boxes, comments, admin user lists — without those call sites needing to
- * know about it. Falls through to Gravatar when no photo has been set.
+ * local photo as their avatar, and set a Swedish translation of their
+ * Biographical Info. The avatar hooks into pre_get_avatar_data so it's
+ * picked up by every core get_avatar()/get_avatar_url() call — Journal
+ * author boxes, comments, admin user lists — without those call sites
+ * needing to know about it. Falls through to Gravatar when no photo has
+ * been set.
+ *
+ * WordPress's own "Biographical Info" field has no per-language variant —
+ * cos_journal_author_box() (inc/template-tags.php) falls back to it for the
+ * end-of-article author bio when a post has no guest-author override, which
+ * showed the English bio verbatim on Swedish articles too. This adds a
+ * second, Swedish-only bio field for that fallback to prefer on /sv/ pages.
  */
 class COS_User_Avatar {
 
-	const META_KEY = 'cos_local_avatar';
+	const META_KEY         = 'cos_local_avatar';
+	const BIO_SV_META_KEY  = 'cos_local_bio_sv';
 
 	public static function init() {
 		add_action( 'show_user_profile', array( __CLASS__, 'render_fields' ) );
@@ -50,6 +59,7 @@ class COS_User_Avatar {
 		wp_nonce_field( 'cos_local_avatar_save', 'cos_local_avatar_nonce' );
 		$image_id = (int) get_user_meta( $user->ID, self::META_KEY, true );
 		$thumb    = $image_id ? wp_get_attachment_image_src( $image_id, 'thumbnail' ) : false;
+		$bio_sv   = get_user_meta( $user->ID, self::BIO_SV_META_KEY, true );
 		?>
 		<h2><?php esc_html_e( 'Avatar', 'cos-core' ); ?></h2>
 		<table class="form-table">
@@ -67,6 +77,13 @@ class COS_User_Avatar {
 					<p class="description"><?php esc_html_e( 'Used instead of Gravatar wherever this person is shown as an author.', 'cos-core' ); ?></p>
 				</td>
 			</tr>
+			<tr>
+				<th><label for="cos_local_bio_sv"><?php esc_html_e( 'Swedish Bio', 'cos-core' ); ?></label></th>
+				<td>
+					<textarea id="cos_local_bio_sv" name="cos_local_bio_sv" rows="5" class="large-text"><?php echo esc_textarea( $bio_sv ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'Shown instead of the Biographical Info above on Swedish Journal articles. Leave blank to show the English bio there too.', 'cos-core' ); ?></p>
+				</td>
+			</tr>
 		</table>
 		<?php
 	}
@@ -80,6 +97,9 @@ class COS_User_Avatar {
 			return;
 		}
 		update_user_meta( $user_id, self::META_KEY, isset( $_POST['cos_local_avatar'] ) ? absint( $_POST['cos_local_avatar'] ) : 0 );
+		if ( isset( $_POST['cos_local_bio_sv'] ) ) {
+			update_user_meta( $user_id, self::BIO_SV_META_KEY, sanitize_textarea_field( wp_unslash( $_POST['cos_local_bio_sv'] ) ) );
+		}
 	}
 
 	public static function filter_avatar_data( $args, $id_or_email ) {
