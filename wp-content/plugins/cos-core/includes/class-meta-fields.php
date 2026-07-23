@@ -29,7 +29,6 @@ class COS_Meta_Fields {
 		'cos_parking'           => array( 'Parking', 'string', 'sanitize_text_field' ),
 		'cos_accessibility'     => array( 'Accessibility', 'string', 'sanitize_text_field' ),
 		'cos_guided_tours'      => array( 'Guided Tours', 'string', 'sanitize_text_field' ),
-		'cos_related_buildings' => array( 'Related Castles (comma-separated slugs)', 'string', 'sanitize_text_field' ),
 	);
 
 	const GALLERY_META_KEY = 'cos_building_gallery';
