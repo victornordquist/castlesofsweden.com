@@ -10,7 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class COS_Building_Proximity {
 
-	const TRANSIENT_KEY = 'cos_building_geo_index';
+	// v2: bumped after discovering the underlying get_posts() call was
+	// being silently narrowed to a single language by the site's global
+	// pre_get_posts language filter, so any index cached under the old key
+	// may have been permanently missing one language's entries.
+	const TRANSIENT_KEY = 'cos_building_geo_index_v2';
 	const CACHE_TTL      = DAY_IN_SECONDS;
 
 	public static function init() {
@@ -38,9 +42,15 @@ class COS_Building_Proximity {
 
 		$posts = get_posts(
 			array(
-				'post_type'      => 'cos_building',
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
+				'post_type'       => 'cos_building',
+				'posts_per_page'  => -1,
+				'post_status'     => 'publish',
+				// This index needs both languages present at once (it does
+				// its own per-entry language matching in get_nearby()) —
+				// without this, the site's global language query filter
+				// would silently narrow this to whichever language the
+				// current frontend request happens to be.
+				'cos_lang_filter' => false,
 			)
 		);
 
