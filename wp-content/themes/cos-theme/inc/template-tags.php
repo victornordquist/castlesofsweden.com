@@ -380,7 +380,17 @@ function cos_journal_subnav() {
 					$children = get_categories( array( 'parent' => $term->term_id, 'hide_empty' => false ) );
 					?>
 					<li class="<?php echo $children ? 'has-children' : ''; ?>">
-						<a href="<?php echo esc_url( get_term_link( $term ) ); ?>"><?php echo esc_html( $term->name ); ?></a>
+						<div class="journal-subnav__link-row">
+							<a href="<?php echo esc_url( get_term_link( $term ) ); ?>"><?php echo esc_html( $term->name ); ?></a>
+							<?php if ( $children ) : ?>
+								<button
+									type="button"
+									class="journal-subnav__toggle"
+									aria-expanded="false"
+									aria-label="<?php echo esc_attr( $is_sv ? 'Visa underkategorier' : 'Show subcategories' ); ?>"
+								></button>
+							<?php endif; ?>
+						</div>
 						<?php if ( $children ) : ?>
 							<ul class="journal-subnav__dropdown">
 								<?php foreach ( $children as $child ) : ?>
