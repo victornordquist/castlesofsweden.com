@@ -169,6 +169,27 @@ function cos_social_share_meta() {
 add_action( 'wp_head', 'cos_social_share_meta', 1 );
 
 /**
+ * GA4, gated behind Complianz consent: the type="text/plain" data-category
+ * markers keep these scripts inert until the visitor accepts the
+ * "statistics" cookie category, which Complianz then activates client-side.
+ * The external script deliberately uses data-cmplz-src rather than src —
+ * Complianz's activation JS reads that specific attribute name to find the
+ * URL to fetch once consent is granted; a plain src is never picked up.
+ */
+function cos_ga4_tracking() {
+	?>
+	<script type="text/plain" data-category="statistics" data-cmplz-src="https://www.googletagmanager.com/gtag/js?id=G-KG46F7WJQG"></script>
+	<script type="text/plain" data-category="statistics">
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('config', 'G-KG46F7WJQG');
+	</script>
+	<?php
+}
+add_action( 'wp_head', 'cos_ga4_tracking', 1 );
+
+/**
  * Wraps WooCommerce's default archive/single templates in the same
  * .container.section shell used by every other page on the site, instead of
  * WooCommerce's own unstyled wrapper markup.

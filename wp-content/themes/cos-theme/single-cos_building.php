@@ -46,7 +46,47 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 
 	$thumbnail_url      = get_the_post_thumbnail_url( $post_id, 'full' );
 	$marker_thumbnail_url = get_the_post_thumbnail_url( $post_id, 'thumbnail' );
+
+	$structured_data = array(
+		'@context' => 'https://schema.org',
+		'@type'    => 'TouristAttraction',
+		'name'     => get_the_title(),
+		'url'      => get_permalink( $post_id ),
+	);
+
+	$structured_data_description = $why_visit ?: $tagline;
+	if ( $structured_data_description ) {
+		$structured_data['description'] = $structured_data_description;
+	}
+
+	if ( $thumbnail_url ) {
+		$structured_data['image'] = $image_credit
+			? array( '@type' => 'ImageObject', 'url' => $thumbnail_url, 'creditText' => $image_credit )
+			: $thumbnail_url;
+	}
+
+	if ( $lat && $lng ) {
+		$structured_data['geo'] = array(
+			'@type'     => 'GeoCoordinates',
+			'latitude'  => (float) $lat,
+			'longitude' => (float) $lng,
+		);
+	}
+
+	if ( ! is_wp_error( $region ) && $region ) {
+		$structured_data['address'] = array(
+			'@type'          => 'PostalAddress',
+			'addressRegion'  => $region[0]->name,
+			'addressCountry' => 'SE',
+		);
+	}
+
+	$structured_data_same_as = array_values( array_filter( array( $wikipedia_url, $website_url, $instagram_url ) ) );
+	if ( $structured_data_same_as ) {
+		$structured_data['sameAs'] = $structured_data_same_as;
+	}
 	?>
+	<script type="application/ld+json"><?php echo wp_json_encode( $structured_data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ); ?></script>
 
 	<div
 		class="page-title-bar page-title-bar--image page-title-bar--building<?php echo $thumbnail_url ? '' : ' page-title-bar--placeholder'; ?>"
