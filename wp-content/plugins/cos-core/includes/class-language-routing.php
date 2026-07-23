@@ -354,6 +354,19 @@ class COS_Language_Routing {
 			return;
 		}
 
+		// Same escape hatch as apply_term_language_filter() — pass
+		// array( 'cos_lang_filter' => false ) for a query that intentionally
+		// needs both languages at once (e.g. COS_Building_Proximity building
+		// a cross-language-aware index). Without this, any such query run
+		// during a normal frontend request silently gets narrowed to
+		// whichever language that request happens to be, which previously
+		// meant a cached cross-language index ended up permanently
+		// one-language-only depending on which page first triggered a
+		// rebuild after invalidation.
+		if ( false === $query->get( 'cos_lang_filter' ) ) {
+			return;
+		}
+
 		$post_type = $query->get( 'post_type' );
 		if ( empty( $post_type ) ) {
 			$taxonomy = $query->get( 'taxonomy' );
