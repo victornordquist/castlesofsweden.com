@@ -648,7 +648,6 @@ input[type="submit"]:hover {
 .page-title-bar .page-title-bar__english-name {
 	margin: 4px 0 0;
 	max-width: none;
-	text-align: center;
 	font-family: var(--font-heading);
 	font-size: 1.25rem;
 	font-style: italic;
@@ -661,10 +660,10 @@ input[type="submit"]:hover {
  * item with no explicit width, so it shrinks to fit its content instead of
  * filling the row — .container's own `margin: 0 auto` then centers that
  * narrow box in the middle of the hero instead of sitting flush left.
- * Scoped to buildings only (not Listings, which shares --image) so this
- * doesn't change anything outside the building hero.
+ * Scoped to the --image variant itself (shared by Buildings and Listings,
+ * its only two consumers) so both stay left-aligned to match.
  */
-.page-title-bar--building .container { width: 100%; }
+.page-title-bar--image .container { width: 100%; }
 .page-title-bar .page-title-bar__region {
 	margin: 6px 0 0;
 	max-width: none;
