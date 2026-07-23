@@ -645,15 +645,6 @@ input[type="submit"]:hover {
 	color: var(--color-accent-dark);
 }
 .page-title-bar--placeholder h1 { color: var(--color-text); }
-.page-title-bar .page-title-bar__english-name {
-	margin: 4px 0 0;
-	max-width: none;
-	font-family: var(--font-heading);
-	font-size: 1.25rem;
-	font-style: italic;
-	color: rgba(255,255,255,0.85);
-}
-.page-title-bar--placeholder .page-title-bar__english-name { color: var(--color-text-muted); }
 
 /*
  * .page-title-bar--image's single in-flow child (.container) becomes a flex
@@ -664,7 +655,8 @@ input[type="submit"]:hover {
  * its only two consumers) so both stay left-aligned to match.
  */
 .page-title-bar--image .container { width: 100%; }
-.page-title-bar .page-title-bar__region {
+.page-title-bar .page-title-bar__region,
+.page-title-bar .page-title-bar__english-name {
 	margin: 6px 0 0;
 	max-width: none;
 	text-transform: uppercase;
@@ -673,7 +665,10 @@ input[type="submit"]:hover {
 	font-weight: 600;
 	color: #fff;
 }
-.page-title-bar--placeholder .page-title-bar__region { color: var(--color-text); }
+.page-title-bar--placeholder .page-title-bar__region,
+.page-title-bar--placeholder .page-title-bar__english-name {
+	color: var(--color-text);
+}
 .page-title-bar .page-title-bar__tagline {
 	margin: 4px 0 0;
 	max-width: none;
