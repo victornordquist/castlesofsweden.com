@@ -89,7 +89,7 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	<script type="application/ld+json"><?php echo wp_json_encode( $structured_data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ); ?></script>
 
 	<div
-		class="page-title-bar page-title-bar--image page-title-bar--building<?php echo $thumbnail_url ? '' : ' page-title-bar--placeholder'; ?>"
+		class="page-title-bar page-title-bar--image<?php echo $thumbnail_url ? '' : ' page-title-bar--placeholder'; ?>"
 		<?php if ( $thumbnail_url ) : ?>
 			style="background-image: linear-gradient(90deg, rgba(30,26,20,0.6) 0%, rgba(30,26,20,0.15) 65%), url('<?php echo esc_url( $thumbnail_url ); ?>');"
 		<?php endif; ?>
