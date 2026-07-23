@@ -10,7 +10,44 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	$thumbnail_id     = get_post_thumbnail_id();
 	$thumbnail_caption = $thumbnail_id ? get_the_post_thumbnail_caption( $thumbnail_id ) : '';
 	$image_credit     = get_post_meta( get_the_ID(), 'cos_image_credit', true );
+
+	$structured_data = array(
+		'@context'      => 'https://schema.org',
+		'@type'         => 'Article',
+		'headline'      => get_the_title(),
+		'url'           => get_permalink(),
+		'datePublished' => get_the_date( 'c' ),
+		'dateModified'  => get_the_modified_date( 'c' ),
+		'mainEntityOfPage' => array(
+			'@type' => 'WebPage',
+			'@id'   => get_permalink(),
+		),
+		'author' => array(
+			'@type' => 'Person',
+			'name'  => cos_journal_author_name( get_the_ID() ),
+		),
+		'publisher' => array(
+			'@type' => 'Organization',
+			'name'  => get_bloginfo( 'name' ),
+			'logo'  => array(
+				'@type' => 'ImageObject',
+				'url'   => has_custom_logo()
+					? wp_get_attachment_image_url( get_theme_mod( 'custom_logo' ), 'full' )
+					: ( COS_THEME_URI . '/assets/images/castlesofsweden-share.png' ),
+			),
+		),
+	);
+
+	$structured_data_description = wp_strip_all_tags( get_the_excerpt() );
+	if ( $structured_data_description ) {
+		$structured_data['description'] = $structured_data_description;
+	}
+
+	if ( has_post_thumbnail() ) {
+		$structured_data['image'] = get_the_post_thumbnail_url( get_the_ID(), 'full' );
+	}
 	?>
+	<script type="application/ld+json"><?php echo wp_json_encode( $structured_data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ); ?></script>
 
 	<article class="container section news-article">
 		<div class="news-article__header">
