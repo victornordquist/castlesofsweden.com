@@ -1599,6 +1599,10 @@ body.search-overlay-open { overflow: hidden; }
 .journal-subnav > .container > ul > li {
 	position: relative;
 }
+.journal-subnav__link-row {
+	display: flex;
+	align-items: center;
+}
 .journal-subnav a {
 	display: block;
 	padding: 14px 0;
@@ -1610,15 +1614,33 @@ body.search-overlay-open { overflow: hidden; }
 	text-decoration: none;
 }
 .journal-subnav a:hover { color: var(--color-accent-dark); }
-.journal-subnav li.has-children > a::after {
+.journal-subnav__toggle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	margin-left: 2px;
+	padding: 0;
+	background: none;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+}
+.journal-subnav__toggle::after {
 	content: '';
 	display: inline-block;
-	margin-left: 6px;
 	width: 6px;
 	height: 6px;
 	border-right: 1.5px solid currentColor;
 	border-bottom: 1.5px solid currentColor;
 	transform: translateY(-2px) rotate(45deg);
+	transition: transform 0.15s ease;
+}
+.journal-subnav li.has-children.is-open .journal-subnav__toggle::after,
+.journal-subnav li.has-children:hover .journal-subnav__toggle::after,
+.journal-subnav li.has-children:focus-within .journal-subnav__toggle::after {
+	transform: translateY(2px) rotate(225deg);
 }
 .journal-subnav__dropdown {
 	display: none;
@@ -1632,6 +1654,7 @@ body.search-overlay-open { overflow: hidden; }
 	padding: 8px 0;
 	white-space: nowrap;
 }
+.journal-subnav li.has-children.is-open .journal-subnav__dropdown,
 .journal-subnav li.has-children:hover .journal-subnav__dropdown,
 .journal-subnav li.has-children:focus-within .journal-subnav__dropdown {
 	display: block;
@@ -1646,8 +1669,24 @@ body.search-overlay-open { overflow: hidden; }
 .journal-subnav__dropdown a:hover { background: var(--color-beige); }
 
 @media (max-width: 700px) {
+	/* Keep the same compact horizontally-scrolling bar as larger screens —
+	   only change how an open dropdown is positioned. A horizontally
+	   scrolling container can't also host a dropdown that floats free of
+	   it vertically (browsers couple overflow-x/overflow-y once either
+	   axis isn't `visible`, clipping anything that escapes the box — an
+	   explicit overflow-y: visible does not override this in practice).
+	   So instead of floating, the dropdown drops into normal flow below its
+	   own trigger, growing that one column in place; align-items:
+	   flex-start below stops that from stretching every other column to
+	   match, so collapsed items stay exactly as compact as before. */
 	.journal-subnav .container { overflow-x: auto; }
-	.journal-subnav > .container > ul { justify-content: flex-start; }
+	.journal-subnav > .container > ul { justify-content: flex-start; align-items: flex-start; }
+	.journal-subnav__dropdown {
+		position: static;
+		box-shadow: none;
+		min-width: 0;
+		white-space: normal;
+	}
 }
 
 /* ---------- Journal overview: featured article + grid ---------- */
