@@ -72,7 +72,7 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 					<a class="button" href="<?php echo esc_url( $website_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $is_sv ? 'Officiell webbplats' : 'Official website' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $map_link ) : ?>
-					<a class="button button--outline" href="<?php echo esc_url( $map_link ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $is_sv ? 'Vägbeskrivning' : 'How to get here' ); ?></a>
+					<a class="button button--outline" href="<?php echo esc_url( $map_link ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $is_sv ? 'Vägbeskrivning' : 'Directions' ); ?></a>
 				<?php endif; ?>
 				<button
 					type="button"
@@ -80,7 +80,12 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 					data-save-building-id="<?php echo esc_attr( $post_id ); ?>"
 					data-label-save="<?php echo esc_attr( $is_sv ? 'Spara' : 'Save' ); ?>"
 					data-label-saved="<?php echo esc_attr( $is_sv ? 'Sparad' : 'Saved' ); ?>"
-				><?php echo esc_html( $is_sv ? 'Spara' : 'Save' ); ?></button>
+				>
+					<svg class="save-building-button__icon" width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+						<path d="M9 15.5 2.6 9.2C0.9 7.5 0.9 4.8 2.6 3.1c1.7-1.7 4.4-1.7 6.1 0L9 3.4l0.3-0.3c1.7-1.7 4.4-1.7 6.1 0 1.7 1.7 1.7 4.4 0 6.1L9 15.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+					</svg>
+					<span class="save-building-button__label"><?php echo esc_html( $is_sv ? 'Spara' : 'Save' ); ?></span>
+				</button>
 			</div>
 		</div>
 		<?php if ( $image_credit ) : ?>
@@ -206,7 +211,7 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 					</div>
 				<?php endif; ?>
 
-				<div class="building-info-box">
+				<div class="building-info-box<?php echo $instagram_url ? ' building-info-box--spaced' : ''; ?>">
 					<h3><?php echo esc_html( $is_sv ? 'Byggnadsinformation' : 'Building Information' ); ?></h3>
 					<dl class="building-info-box__list">
 						<?php if ( ! is_wp_error( $building_type ) && $building_type ) : ?>
@@ -246,13 +251,19 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 							</div>
 						<?php endif; ?>
 					</dl>
-
-					<?php if ( $instagram_url ) : ?>
-						<div class="building-info-box__actions">
-							<a href="<?php echo esc_url( $instagram_url ); ?>" target="_blank" rel="noopener">Instagram</a>
-						</div>
-					<?php endif; ?>
 				</div>
+
+				<?php if ( $instagram_url ) : ?>
+					<div class="building-info-box building-info-box--spaced">
+						<h3><?php echo esc_html( $is_sv ? 'Kontakta oss' : 'Get in touch' ); ?></h3>
+						<div class="building-info-box__actions">
+							<a href="<?php echo esc_url( $instagram_url ); ?>" target="_blank" rel="noopener">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+								Instagram
+							</a>
+						</div>
+					</div>
+				<?php endif; ?>
 			</aside>
 		</div>
 	</div>

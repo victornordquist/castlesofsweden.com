@@ -141,6 +141,13 @@ input[type="submit"]:hover {
 	background: rgba(0,0,0,0.55);
 	color: #fff;
 }
+.save-building-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+.save-building-button__icon { flex-shrink: 0; }
+.save-building-button.is-saved .save-building-button__icon { fill: currentColor; }
 
 /* ---------- Header ---------- */
 .site-header {

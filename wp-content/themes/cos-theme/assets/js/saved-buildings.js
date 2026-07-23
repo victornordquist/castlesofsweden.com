@@ -53,11 +53,17 @@
 	document.addEventListener( 'DOMContentLoaded', function () {
 		var button = document.querySelector( '.save-building-button' );
 		if ( button ) {
-			var id = parseInt( button.getAttribute( 'data-save-building-id' ), 10 );
+			var id    = parseInt( button.getAttribute( 'data-save-building-id' ), 10 );
+			var label = button.querySelector( '.save-building-button__label' );
 
 			var render = function () {
 				var saved = isSaved( id );
-				button.textContent = saved ? button.getAttribute( 'data-label-saved' ) : button.getAttribute( 'data-label-save' );
+				var text  = saved ? button.getAttribute( 'data-label-saved' ) : button.getAttribute( 'data-label-save' );
+				if ( label ) {
+					label.textContent = text;
+				} else {
+					button.textContent = text;
+				}
 				button.classList.toggle( 'is-saved', saved );
 			};
 			render();
