@@ -467,6 +467,7 @@ function cos_enqueue_assets() {
 			'tripCopyLink'         => $is_sv ? __( 'Kopiera länk', 'cos-theme' ) : __( 'Copy link', 'cos-theme' ),
 			'tripLinkCopied'       => $is_sv ? __( 'Länk kopierad!', 'cos-theme' ) : __( 'Link copied!', 'cos-theme' ),
 			'tripCopyLinkFallback' => $is_sv ? __( 'Kopiera den här länken:', 'cos-theme' ) : __( 'Copy this link:', 'cos-theme' ),
+			'tripOpenMaps'         => $is_sv ? __( 'Öppna i Google Maps', 'cos-theme' ) : __( 'Open in Google Maps', 'cos-theme' ),
 			'tripSaveAll'          => $is_sv ? __( 'Spara alla i mina sparade platser', 'cos-theme' ) : __( 'Save all to my saved places', 'cos-theme' ),
 			'tripSaveAllDone'      => $is_sv ? __( 'Sparat!', 'cos-theme' ) : __( 'Saved!', 'cos-theme' ),
 			'tripSharedNotice'     => $is_sv ? __( 'Du tittar på en delad resplan.', 'cos-theme' ) : __( 'You\'re viewing a shared trip itinerary.', 'cos-theme' ),

@@ -540,13 +540,17 @@ input[type="submit"]:hover {
 }
 .trip-planner__total { margin: 0 0 24px; font-weight: 600; color: var(--color-text); }
 .trip-planner__actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.trip-planner__copy-link {
+.trip-planner__copy-link,
+.trip-planner__open-maps {
+	display: inline-block;
 	background: none;
 	border: 1px solid var(--color-text-muted);
 	color: var(--color-text);
 	padding: 0.6em 1.1em;
+	text-decoration: none;
 }
-.trip-planner__copy-link:hover { background: var(--color-beige); }
+.trip-planner__copy-link:hover,
+.trip-planner__open-maps:hover { background: var(--color-beige); }
 .trip-planner__copy-link:disabled { opacity: 0.7; cursor: default; }
 
 @media (max-width: 600px) {

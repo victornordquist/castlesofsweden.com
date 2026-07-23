@@ -505,6 +505,33 @@
 		return Math.round( km ) + ' km';
 	}
 
+	/**
+	 * Google Maps' free, keyless directions URL scheme — opens the Google
+	 * Maps app if installed, otherwise the web version, on any platform
+	 * (iOS included), so no separate Apple Maps link/device detection needed.
+	 */
+	function buildGoogleMapsUrl( stops ) {
+		var validStops = stops.filter( function ( stop ) { return stop.data.lat != null && stop.data.lng != null; } );
+		if ( validStops.length < 2 ) {
+			return null;
+		}
+
+		var coords      = validStops.map( function ( stop ) { return stop.data.lat + ',' + stop.data.lng; } );
+		var origin      = coords[ 0 ];
+		var destination = coords[ coords.length - 1 ];
+		var waypoints   = coords.slice( 1, -1 );
+
+		var url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving' +
+			'&origin=' + encodeURIComponent( origin ) +
+			'&destination=' + encodeURIComponent( destination );
+
+		if ( waypoints.length ) {
+			url += '&waypoints=' + encodeURIComponent( waypoints.join( '|' ) );
+		}
+
+		return url;
+	}
+
 	function photoMarkerIcon( thumbnailUrl ) {
 		var style = thumbnailUrl ? "background-image:url('" + thumbnailUrl.replace( /'/g, '%27' ) + "');" : '';
 		return L.divIcon( {
@@ -726,6 +753,17 @@
 			}
 		} );
 		actions.appendChild( copyLinkBtn );
+
+		var mapsUrl = buildGoogleMapsUrl( stops );
+		if ( mapsUrl ) {
+			var openMapsLink = document.createElement( 'a' );
+			openMapsLink.className = 'trip-planner__open-maps';
+			openMapsLink.href = mapsUrl;
+			openMapsLink.target = '_blank';
+			openMapsLink.rel = 'noopener';
+			openMapsLink.textContent = labels.tripOpenMaps;
+			actions.appendChild( openMapsLink );
+		}
 
 		if ( options.showSaveAll ) {
 			var saveAllBtn = document.createElement( 'button' );
