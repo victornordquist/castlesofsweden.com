@@ -311,12 +311,13 @@ function cos_enqueue_assets() {
 	wp_enqueue_script( 'cos-theme-main', COS_THEME_URI . '/assets/js/main.js', array(), cos_asset_version( '/assets/js/main.js' ), true );
 
 	$is_sv             = 'sv' === COS_Language_Routing::current_lang();
-	$is_map_page       = cos_is_page_any_lang( 'map' );
-	$is_term_page      = is_tax( array( 'cos_region', 'cos_category' ) );
-	$is_building_page  = is_singular( array( 'cos_building', 'cos_listing' ) );
-	$is_front_page     = is_front_page();
+	$is_map_page          = cos_is_page_any_lang( 'map' );
+	$is_term_page         = is_tax( array( 'cos_region', 'cos_category' ) );
+	$is_building_page     = is_singular( array( 'cos_building', 'cos_listing' ) );
+	$is_front_page        = is_front_page();
+	$is_saved_places_page = cos_is_page_any_lang( 'saved-places' );
 
-	if ( $is_map_page || $is_term_page || $is_building_page ) {
+	if ( $is_map_page || $is_term_page || $is_building_page || $is_saved_places_page ) {
 		wp_enqueue_style( 'leaflet', COS_THEME_URI . '/assets/vendor/leaflet/leaflet.css', array(), '1.9.4' );
 		wp_enqueue_script( 'leaflet', COS_THEME_URI . '/assets/vendor/leaflet/leaflet.js', array(), '1.9.4', true );
 	}
@@ -415,7 +416,17 @@ function cos_enqueue_assets() {
 
 	// Sitewide: the nav's saved-places heart icon needs its count badge kept
 	// up to date on every page, not just where the Save button itself lives.
-	wp_enqueue_script( 'cos-saved-buildings', COS_THEME_URI . '/assets/js/saved-buildings.js', array(), cos_asset_version( '/assets/js/saved-buildings.js' ), true );
+	// Leaflet is only actually registered on pages matched by the conditional
+	// above (this script is enqueued sitewide for the nav save-count badge),
+	// so only declare the dependency where it's actually there to avoid
+	// referencing an unregistered handle everywhere else.
+	wp_enqueue_script(
+		'cos-saved-buildings',
+		COS_THEME_URI . '/assets/js/saved-buildings.js',
+		$is_saved_places_page ? array( 'leaflet' ) : array(),
+		cos_asset_version( '/assets/js/saved-buildings.js' ),
+		true
+	);
 
 	wp_localize_script( 'cos-saved-buildings', 'cosSavedBuildingsData', array(
 		'buildingsEndpoint'     => esc_url_raw( rest_url( 'wp/v2/cos_building' ) ),
@@ -448,6 +459,18 @@ function cos_enqueue_assets() {
 				'accessibility' => $is_sv ? __( 'Tillgänglighet', 'cos-theme' ) : __( 'Accessibility', 'cos-theme' ),
 				'guidedTours'   => $is_sv ? __( 'Guidade turer', 'cos-theme' ) : __( 'Guided Tours', 'cos-theme' ),
 			),
+			'tripHeading'          => $is_sv ? __( 'Din resplan', 'cos-theme' ) : __( 'Your trip', 'cos-theme' ),
+			'tripMoveUp'           => $is_sv ? __( 'Flytta upp', 'cos-theme' ) : __( 'Move up', 'cos-theme' ),
+			'tripMoveDown'         => $is_sv ? __( 'Flytta ner', 'cos-theme' ) : __( 'Move down', 'cos-theme' ),
+			'tripToNext'           => $is_sv ? __( 'till nästa stopp', 'cos-theme' ) : __( 'to next stop', 'cos-theme' ),
+			'tripTotal'            => $is_sv ? __( 'Total sträcka: %s', 'cos-theme' ) : __( 'Total distance: %s', 'cos-theme' ),
+			'tripCopyLink'         => $is_sv ? __( 'Kopiera länk', 'cos-theme' ) : __( 'Copy link', 'cos-theme' ),
+			'tripLinkCopied'       => $is_sv ? __( 'Länk kopierad!', 'cos-theme' ) : __( 'Link copied!', 'cos-theme' ),
+			'tripCopyLinkFallback' => $is_sv ? __( 'Kopiera den här länken:', 'cos-theme' ) : __( 'Copy this link:', 'cos-theme' ),
+			'tripSaveAll'          => $is_sv ? __( 'Spara alla i mina sparade platser', 'cos-theme' ) : __( 'Save all to my saved places', 'cos-theme' ),
+			'tripSaveAllDone'      => $is_sv ? __( 'Sparat!', 'cos-theme' ) : __( 'Saved!', 'cos-theme' ),
+			'tripSharedNotice'     => $is_sv ? __( 'Du tittar på en delad resplan.', 'cos-theme' ) : __( 'You\'re viewing a shared trip itinerary.', 'cos-theme' ),
+			'tripSharedEmpty'      => $is_sv ? __( 'Den här resplanen kunde inte laddas.', 'cos-theme' ) : __( 'This trip couldn\'t be loaded.', 'cos-theme' ),
 		),
 	) );
 }

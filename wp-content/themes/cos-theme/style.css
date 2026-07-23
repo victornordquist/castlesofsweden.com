@@ -487,6 +487,72 @@ input[type="submit"]:hover {
 	.compare-bar { flex-direction: column; align-items: stretch; gap: 10px; text-align: center; }
 }
 
+/* ---------- Saved Places: trip planner ---------- */
+.trip-planner { margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--color-beige); }
+.trip-planner__heading { margin-bottom: 8px; }
+.trip-planner__shared-notice {
+	margin-bottom: 20px;
+	padding: 10px 16px;
+	background: var(--color-beige);
+	border-radius: var(--radius);
+	color: var(--color-text-muted);
+	font-size: 0.9rem;
+}
+.trip-planner__map {
+	height: 320px;
+	margin-bottom: 24px;
+	border-radius: var(--radius);
+	overflow: hidden;
+}
+.trip-planner__list {
+	list-style: none;
+	margin: 0 0 16px;
+	padding: 0;
+}
+.trip-planner__stop {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--color-beige);
+}
+.trip-planner__stop-title {
+	flex: 1;
+	color: var(--color-text);
+	font-weight: 500;
+}
+.trip-planner__move {
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	background: var(--color-beige);
+	color: var(--color-text);
+	font-size: 1rem;
+	line-height: 1;
+}
+.trip-planner__move:hover { background: var(--color-accent-dark); color: #fff; }
+.trip-planner__move:disabled { opacity: 0.35; cursor: not-allowed; }
+.trip-planner__move:disabled:hover { background: var(--color-beige); color: var(--color-text); }
+.trip-planner__leg {
+	padding: 4px 0 4px 16px;
+	color: var(--color-text-muted);
+	font-size: 0.85rem;
+}
+.trip-planner__total { margin: 0 0 24px; font-weight: 600; color: var(--color-text); }
+.trip-planner__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.trip-planner__copy-link {
+	background: none;
+	border: 1px solid var(--color-text-muted);
+	color: var(--color-text);
+	padding: 0.6em 1.1em;
+}
+.trip-planner__copy-link:hover { background: var(--color-beige); }
+.trip-planner__copy-link:disabled { opacity: 0.7; cursor: default; }
+
+@media (max-width: 600px) {
+	.trip-planner__actions { flex-direction: column; align-items: stretch; }
+}
+
 .hero {
 	position: relative;
 	background-color: var(--color-footer);

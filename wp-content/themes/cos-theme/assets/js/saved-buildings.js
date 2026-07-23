@@ -78,9 +78,60 @@
 
 		var container = document.getElementById( 'cos-saved-places' );
 		if ( container && window.cosSavedBuildingsData ) {
-			renderSavedPlaces( container, window.cosSavedBuildingsData );
+			var tripParam = new URLSearchParams( window.location.search ).get( 'trip' );
+			var sharedIds = tripParam
+				? tripParam.split( ',' ).map( function ( s ) { return parseInt( s, 10 ); } ).filter( function ( id ) { return Number.isInteger( id ) && id > 0; } )
+				: [];
+
+			if ( sharedIds.length >= 2 ) {
+				renderSharedTrip( container, sharedIds, window.cosSavedBuildingsData );
+			} else {
+				renderSavedPlaces( container, window.cosSavedBuildingsData );
+			}
 		}
 	} );
+
+	function fetchTermNames( matching, data ) {
+		var taxonomyConfigs = [
+			{ field: 'cos_region', endpoint: data.regionsEndpoint, key: 'region' },
+			{ field: 'cos_building_type', endpoint: data.buildingTypesEndpoint, key: 'buildingType' },
+			{ field: 'cos_architectural_style', endpoint: data.stylesEndpoint, key: 'style' },
+			{ field: 'cos_era', endpoint: data.erasEndpoint, key: 'era' }
+		];
+
+		var lookups = taxonomyConfigs.map( function ( config ) {
+			var termIds = [];
+			matching.forEach( function ( building ) {
+				( building[ config.field ] || [] ).forEach( function ( termId ) {
+					if ( termIds.indexOf( termId ) === -1 ) {
+						termIds.push( termId );
+					}
+				} );
+			} );
+
+			if ( ! termIds.length || ! config.endpoint ) {
+				return Promise.resolve( {} );
+			}
+
+			return fetch( config.endpoint + '?include=' + termIds.join( ',' ) + '&_fields=id,name' )
+				.then( function ( response ) { return response.ok ? response.json() : []; } )
+				.then( function ( terms ) {
+					var names = {};
+					terms.forEach( function ( term ) { names[ term.id ] = decodeHtml( term.name ); } );
+					return names;
+				} )
+				.catch( function () { return {}; } );
+		} );
+
+		return Promise.all( lookups ).then( function ( results ) {
+			return {
+				region: results[ 0 ],
+				buildingType: results[ 1 ],
+				style: results[ 2 ],
+				era: results[ 3 ]
+			};
+		} );
+	}
 
 	function renderSavedPlaces( container, data ) {
 		var ids = getSavedIds();
@@ -111,48 +162,51 @@
 					return;
 				}
 
-				var taxonomyConfigs = [
-					{ field: 'cos_region', endpoint: data.regionsEndpoint, key: 'region' },
-					{ field: 'cos_building_type', endpoint: data.buildingTypesEndpoint, key: 'buildingType' },
-					{ field: 'cos_architectural_style', endpoint: data.stylesEndpoint, key: 'style' },
-					{ field: 'cos_era', endpoint: data.erasEndpoint, key: 'era' }
-				];
-
-				var lookups = taxonomyConfigs.map( function ( config ) {
-					var termIds = [];
-					matching.forEach( function ( building ) {
-						( building[ config.field ] || [] ).forEach( function ( termId ) {
-							if ( termIds.indexOf( termId ) === -1 ) {
-								termIds.push( termId );
-							}
-						} );
-					} );
-
-					if ( ! termIds.length || ! config.endpoint ) {
-						return Promise.resolve( {} );
-					}
-
-					return fetch( config.endpoint + '?include=' + termIds.join( ',' ) + '&_fields=id,name' )
-						.then( function ( response ) { return response.ok ? response.json() : []; } )
-						.then( function ( terms ) {
-							var names = {};
-							terms.forEach( function ( term ) { names[ term.id ] = decodeHtml( term.name ); } );
-							return names;
-						} )
-						.catch( function () { return {}; } );
-				} );
-
-				Promise.all( lookups ).then( function ( results ) {
-					var names = {
-						region: results[ 0 ],
-						buildingType: results[ 1 ],
-						style: results[ 2 ],
-						era: results[ 3 ]
-					};
+				fetchTermNames( matching, data ).then( function ( names ) {
 					renderSavedPlacesUI( container, matching, names, data.labels );
 				} );
 			} )
 			.catch( function () { container.textContent = data.labels.empty; } );
+	}
+
+	function renderSharedTrip( container, ids, data ) {
+		var url = data.buildingsEndpoint + '?include=' + ids.join( ',' ) +
+			'&orderby=include&per_page=100&_embed=wp:featuredmedia';
+
+		fetch( url )
+			.then( function ( response ) { return response.ok ? response.json() : []; } )
+			.then( function ( buildings ) {
+				var matching = buildings.filter( function ( building ) {
+					return ( ( building.meta && building.meta.cos_lang ) || 'en' ) === data.lang;
+				} );
+
+				if ( matching.length < 2 ) {
+					container.textContent = data.labels.tripSharedEmpty;
+					return;
+				}
+
+				fetchTermNames( matching, data ).then( function ( names ) {
+					var buildingsById = {};
+					matching.forEach( function ( building ) {
+						buildingsById[ building.id ] = buildingCardData( building, names );
+					} );
+
+					var orderedIds = ids.filter( function ( id ) { return buildingsById[ id ]; } );
+
+					container.textContent = '';
+
+					var tripSection = document.createElement( 'div' );
+					tripSection.className = 'trip-planner';
+					container.appendChild( tripSection );
+
+					renderTripPlanner( tripSection, orderedIds, buildingsById, data.labels, {
+						onReorder: null,
+						readOnly: true,
+						showSaveAll: true
+					} );
+				} );
+			} )
+			.catch( function () { container.textContent = data.labels.tripSharedEmpty; } );
 	}
 
 	function termNames( ids, names ) {
@@ -172,6 +226,12 @@
 			title: decodeHtml( building.title.rendered ),
 			link: building.link,
 			image: imageUrl,
+			// A registered `number`-type meta field with no value set comes
+			// back from the REST API as 0, not '' or null — and (0,0) is
+			// never a real Swedish location, so treating it as "missing" is
+			// correct for this dataset, unlike a bare null/empty-string check.
+			lat: postMeta.cos_lat ? parseFloat( postMeta.cos_lat ) : null,
+			lng: postMeta.cos_lng ? parseFloat( postMeta.cos_lng ) : null,
 			region: termNames( building.cos_region, names.region ),
 			buildingType: termNames( building.cos_building_type, names.buildingType ),
 			style: termNames( building.cos_architectural_style, names.style ),
@@ -305,11 +365,20 @@
 		section.className = 'compare-section';
 		section.hidden = true;
 
+		var tripSection = document.createElement( 'div' );
+		tripSection.className = 'trip-planner';
+
 		container.textContent = '';
 		container.appendChild( toolbar );
 		container.appendChild( grid );
 		container.appendChild( bar );
 		container.appendChild( section );
+		container.appendChild( tripSection );
+
+		function handleReorder( newIds ) {
+			setSavedIds( newIds );
+			renderTripPlanner( tripSection, newIds, buildingsById, labels, { onReorder: handleReorder } );
+		}
 
 		function updateToolbar() {
 			countLabel.textContent = labels.savedCount.replace( '%d', grid.querySelectorAll( '.save-card' ).length );
@@ -354,6 +423,7 @@
 
 			updateToolbar();
 			updateCompareBar();
+			renderTripPlanner( tripSection, getSavedIds(), buildingsById, labels, { onReorder: handleReorder } );
 		}
 
 		container.addEventListener( 'click', function ( event ) {
@@ -418,6 +488,312 @@
 		} );
 
 		updateToolbar();
+		renderTripPlanner( tripSection, getSavedIds(), buildingsById, labels, { onReorder: handleReorder } );
+	}
+
+	function haversineKm( lat1, lng1, lat2, lng2 ) {
+		var R    = 6371;
+		var dLat = ( lat2 - lat1 ) * Math.PI / 180;
+		var dLng = ( lng2 - lng1 ) * Math.PI / 180;
+		var a    = Math.sin( dLat / 2 ) * Math.sin( dLat / 2 ) +
+			Math.cos( lat1 * Math.PI / 180 ) * Math.cos( lat2 * Math.PI / 180 ) *
+			Math.sin( dLng / 2 ) * Math.sin( dLng / 2 );
+		return R * 2 * Math.atan2( Math.sqrt( a ), Math.sqrt( 1 - a ) );
+	}
+
+	function formatKm( km ) {
+		return Math.round( km ) + ' km';
+	}
+
+	function photoMarkerIcon( thumbnailUrl ) {
+		var style = thumbnailUrl ? "background-image:url('" + thumbnailUrl.replace( /'/g, '%27' ) + "');" : '';
+		return L.divIcon( {
+			className: 'cos-map-marker',
+			html: '<span class="cos-map-marker__inner" style="' + style + '"></span>',
+			iconSize: [ 40, 40 ],
+			iconAnchor: [ 20, 20 ],
+			popupAnchor: [ 0, -20 ]
+		} );
+	}
+
+	function renderTripMap( mapDiv, stops ) {
+		if ( typeof L === 'undefined' ) {
+			mapDiv.hidden = true;
+			return null;
+		}
+
+		var validStops = stops.filter( function ( stop ) { return stop.data.lat != null && stop.data.lng != null; } );
+		if ( validStops.length < 2 ) {
+			mapDiv.hidden = true;
+			return null;
+		}
+		mapDiv.hidden = false;
+
+		var map = L.map( mapDiv, { scrollWheelZoom: false } ).setView( [ validStops[ 0 ].data.lat, validStops[ 0 ].data.lng ], 6 );
+
+		L.tileLayer( 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+		} ).addTo( map );
+
+		var latlngs = validStops.map( function ( stop ) { return [ stop.data.lat, stop.data.lng ]; } );
+
+		validStops.forEach( function ( stop, index ) {
+			L.marker( latlngs[ index ], { icon: photoMarkerIcon( stop.data.image ) } )
+				.bindPopup( '<strong>' + ( index + 1 ) + '. ' + stop.data.title + '</strong>' )
+				.addTo( map );
+		} );
+
+		// Hardcoded --color-accent-dark: Leaflet passes this straight into an
+		// SVG stroke attribute, not a stylesheet, so a CSS custom property
+		// isn't guaranteed to resolve the same way — a literal value is safer.
+		// Dashed = straight-line estimate, shown immediately; swapped for a
+		// solid line once the real driving route resolves (updateTripMapRoute).
+		var line = L.polyline( latlngs, { color: '#a87e42', weight: 3, dashArray: '6,8' } ).addTo( map );
+
+		map.fitBounds( latlngs, { padding: [ 30, 30 ], maxZoom: 12 } );
+
+		return { map: map, line: line };
+	}
+
+	function updateTripMapRoute( mapState, routeLatLngs ) {
+		if ( ! mapState ) {
+			return;
+		}
+		mapState.line.remove();
+		mapState.line = L.polyline( routeLatLngs, { color: '#a87e42', weight: 4 } ).addTo( mapState.map );
+		mapState.map.fitBounds( routeLatLngs, { padding: [ 30, 30 ], maxZoom: 12 } );
+	}
+
+	/**
+	 * Real driving distance/route via OSRM's public demo API — no key
+	 * needed, but it's explicitly a demo server (not an SLA'd production
+	 * service), so any failure here just means the straight-line estimate
+	 * already on screen stays as-is rather than being replaced.
+	 */
+	function fetchDrivingRoute( stops ) {
+		var coords = stops.map( function ( stop ) { return stop.data.lng + ',' + stop.data.lat; } ).join( ';' );
+		var url = 'https://router.project-osrm.org/route/v1/driving/' + coords + '?overview=full&geometries=geojson';
+
+		return fetch( url )
+			.then( function ( response ) { return response.ok ? response.json() : null; } )
+			.then( function ( data ) {
+				if ( ! data || 'Ok' !== data.code || ! data.routes || ! data.routes.length ) {
+					return null;
+				}
+				var route = data.routes[ 0 ];
+				return {
+					legKm: route.legs.map( function ( leg ) { return leg.distance / 1000; } ),
+					totalKm: route.distance / 1000,
+					// OSRM returns [lng,lat] pairs; Leaflet expects [lat,lng].
+					latlngs: route.geometry.coordinates.map( function ( pair ) { return [ pair[ 1 ], pair[ 0 ] ]; } )
+				};
+			} )
+			.catch( function () { return null; } );
+	}
+
+	function renderTripPlanner( container, ids, buildingsById, labels, options ) {
+		options = options || {};
+		container.textContent = '';
+
+		var stops = ids
+			.map( function ( id ) { return { id: id, data: buildingsById[ id ] }; } )
+			.filter( function ( stop ) { return stop.data; } );
+
+		if ( stops.length < 2 ) {
+			container.hidden = true;
+			return;
+		}
+		container.hidden = false;
+
+		var heading = document.createElement( 'h2' );
+		heading.className = 'trip-planner__heading';
+		heading.textContent = labels.tripHeading;
+		container.appendChild( heading );
+
+		if ( options.readOnly ) {
+			var notice = document.createElement( 'p' );
+			notice.className = 'trip-planner__shared-notice';
+			notice.textContent = labels.tripSharedNotice;
+			container.appendChild( notice );
+		}
+
+		var mapDiv = document.createElement( 'div' );
+		mapDiv.id = 'cos-trip-map';
+		mapDiv.className = 'trip-planner__map';
+		container.appendChild( mapDiv );
+
+		var list = document.createElement( 'ol' );
+		list.className = 'trip-planner__list';
+		var legElements = [];
+
+		stops.forEach( function ( stop, index ) {
+			var li = document.createElement( 'li' );
+			li.className = 'trip-planner__stop';
+			li.setAttribute( 'data-trip-stop-id', stop.id );
+
+			var titleLink = document.createElement( 'a' );
+			titleLink.className = 'trip-planner__stop-title';
+			titleLink.href = stop.data.link;
+			titleLink.textContent = ( index + 1 ) + '. ' + stop.data.title;
+			li.appendChild( titleLink );
+
+			if ( ! options.readOnly ) {
+				var upBtn = document.createElement( 'button' );
+				upBtn.type = 'button';
+				upBtn.className = 'trip-planner__move trip-planner__move--up';
+				upBtn.setAttribute( 'data-move', 'up' );
+				upBtn.setAttribute( 'data-move-id', stop.id );
+				upBtn.setAttribute( 'aria-label', labels.tripMoveUp );
+				upBtn.disabled = ( index === 0 );
+				upBtn.textContent = '↑';
+
+				var downBtn = document.createElement( 'button' );
+				downBtn.type = 'button';
+				downBtn.className = 'trip-planner__move trip-planner__move--down';
+				downBtn.setAttribute( 'data-move', 'down' );
+				downBtn.setAttribute( 'data-move-id', stop.id );
+				downBtn.setAttribute( 'aria-label', labels.tripMoveDown );
+				downBtn.disabled = ( index === stops.length - 1 );
+				downBtn.textContent = '↓';
+
+				li.appendChild( upBtn );
+				li.appendChild( downBtn );
+			}
+
+			list.appendChild( li );
+
+			if ( index < stops.length - 1 ) {
+				var next  = stops[ index + 1 ];
+				var legLi = document.createElement( 'li' );
+				legLi.className = 'trip-planner__leg';
+				legLi.setAttribute( 'aria-hidden', 'true' );
+
+				if ( stop.data.lat != null && stop.data.lng != null && next.data.lat != null && next.data.lng != null ) {
+					var legKm = haversineKm( stop.data.lat, stop.data.lng, next.data.lat, next.data.lng );
+					legLi.textContent = formatKm( legKm ) + ' ' + labels.tripToNext;
+				} else {
+					legLi.textContent = '—';
+				}
+
+				list.appendChild( legLi );
+				legElements.push( legLi );
+			}
+		} );
+
+		container.appendChild( list );
+
+		var totalKm = 0;
+		for ( var i = 0; i < stops.length - 1; i++ ) {
+			var a = stops[ i ].data;
+			var b = stops[ i + 1 ].data;
+			if ( a.lat != null && a.lng != null && b.lat != null && b.lng != null ) {
+				totalKm += haversineKm( a.lat, a.lng, b.lat, b.lng );
+			}
+		}
+
+		var totalEl = document.createElement( 'p' );
+		totalEl.className = 'trip-planner__total';
+		totalEl.textContent = labels.tripTotal.replace( '%s', formatKm( totalKm ) );
+		container.appendChild( totalEl );
+
+		var actions = document.createElement( 'div' );
+		actions.className = 'trip-planner__actions';
+
+		var copyLinkBtn = document.createElement( 'button' );
+		copyLinkBtn.type = 'button';
+		copyLinkBtn.className = 'trip-planner__copy-link';
+		var copyLinkDefaultText = labels.tripCopyLink;
+		copyLinkBtn.textContent = copyLinkDefaultText;
+		copyLinkBtn.addEventListener( 'click', function () {
+			var shareUrl = location.origin + location.pathname + '?trip=' + stops.map( function ( stop ) { return stop.id; } ).join( ',' );
+
+			function showCopied() {
+				copyLinkBtn.textContent = labels.tripLinkCopied;
+				copyLinkBtn.disabled = true;
+				setTimeout( function () {
+					copyLinkBtn.textContent = copyLinkDefaultText;
+					copyLinkBtn.disabled = false;
+				}, 2000 );
+			}
+
+			if ( navigator.clipboard && navigator.clipboard.writeText ) {
+				navigator.clipboard.writeText( shareUrl ).then( showCopied, function () {
+					window.prompt( labels.tripCopyLinkFallback, shareUrl );
+				} );
+			} else {
+				window.prompt( labels.tripCopyLinkFallback, shareUrl );
+			}
+		} );
+		actions.appendChild( copyLinkBtn );
+
+		if ( options.showSaveAll ) {
+			var saveAllBtn = document.createElement( 'button' );
+			saveAllBtn.type = 'button';
+			saveAllBtn.className = 'button trip-planner__save-all';
+			saveAllBtn.textContent = labels.tripSaveAll;
+			saveAllBtn.addEventListener( 'click', function () {
+				var currentIds = getSavedIds();
+				stops.forEach( function ( stop ) {
+					if ( currentIds.indexOf( stop.id ) === -1 ) {
+						currentIds.push( stop.id );
+					}
+				} );
+				setSavedIds( currentIds );
+				updateNavBadge();
+				saveAllBtn.textContent = labels.tripSaveAllDone;
+				saveAllBtn.disabled = true;
+			} );
+			actions.appendChild( saveAllBtn );
+		}
+
+		container.appendChild( actions );
+
+		if ( ! options.readOnly ) {
+			list.addEventListener( 'click', function ( event ) {
+				var btn = event.target.closest && event.target.closest( '[data-move]' );
+				if ( ! btn || btn.disabled ) {
+					return;
+				}
+				var id         = parseInt( btn.getAttribute( 'data-move-id' ), 10 );
+				var dir        = btn.getAttribute( 'data-move' );
+				var currentIds = stops.map( function ( stop ) { return stop.id; } );
+				var pos        = currentIds.indexOf( id );
+				var swapWith   = dir === 'up' ? pos - 1 : pos + 1;
+				if ( swapWith < 0 || swapWith >= currentIds.length ) {
+					return;
+				}
+				var tmp = currentIds[ pos ];
+				currentIds[ pos ] = currentIds[ swapWith ];
+				currentIds[ swapWith ] = tmp;
+
+				if ( options.onReorder ) {
+					options.onReorder( currentIds );
+				}
+			} );
+		}
+
+		var mapState = renderTripMap( mapDiv, stops );
+
+		// Straight-line numbers/route above are already on screen and fully
+		// correct as an estimate — this just upgrades them in place once a
+		// real driving route comes back, and quietly leaves them as-is if
+		// the request fails or any stop lacks coordinates.
+		var allStopsHaveCoords = stops.every( function ( stop ) { return stop.data.lat != null && stop.data.lng != null; } );
+		if ( allStopsHaveCoords && stops.length >= 2 ) {
+			fetchDrivingRoute( stops ).then( function ( route ) {
+				if ( ! route ) {
+					return;
+				}
+				legElements.forEach( function ( legEl, index ) {
+					if ( route.legKm[ index ] != null ) {
+						legEl.textContent = formatKm( route.legKm[ index ] ) + ' ' + labels.tripToNext;
+					}
+				} );
+				totalEl.textContent = labels.tripTotal.replace( '%s', formatKm( route.totalKm ) );
+				updateTripMapRoute( mapState, route.latlngs );
+			} );
+		}
 	}
 
 	function renderComparisonTable( section, ids, buildingsById, labels ) {
