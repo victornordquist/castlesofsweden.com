@@ -391,11 +391,36 @@ function cos_enqueue_assets() {
 	wp_enqueue_script( 'cos-saved-buildings', COS_THEME_URI . '/assets/js/saved-buildings.js', array(), cos_asset_version( '/assets/js/saved-buildings.js' ), true );
 
 	wp_localize_script( 'cos-saved-buildings', 'cosSavedBuildingsData', array(
-		'buildingsEndpoint' => esc_url_raw( rest_url( 'wp/v2/cos_building' ) ),
-		'regionsEndpoint'   => esc_url_raw( rest_url( 'wp/v2/cos_region' ) ),
-		'lang'              => $is_sv ? 'sv' : 'en',
-		'labels'            => array(
-			'empty' => $is_sv ? __( 'Du har inte sparat några platser än.', 'cos-theme' ) : __( 'You haven\'t saved any places yet.', 'cos-theme' ),
+		'buildingsEndpoint'     => esc_url_raw( rest_url( 'wp/v2/cos_building' ) ),
+		'regionsEndpoint'       => esc_url_raw( rest_url( 'wp/v2/cos_region' ) ),
+		'buildingTypesEndpoint' => esc_url_raw( rest_url( 'wp/v2/cos_building_type' ) ),
+		'stylesEndpoint'        => esc_url_raw( rest_url( 'wp/v2/cos_architectural_style' ) ),
+		'erasEndpoint'          => esc_url_raw( rest_url( 'wp/v2/cos_era' ) ),
+		'lang'                  => $is_sv ? 'sv' : 'en',
+		'labels'                => array(
+			'empty'           => $is_sv ? __( 'Du har inte sparat några platser än.', 'cos-theme' ) : __( 'You haven\'t saved any places yet.', 'cos-theme' ),
+			'savedCount'      => $is_sv ? __( '%d sparade', 'cos-theme' ) : __( '%d saved', 'cos-theme' ),
+			'clearAll'        => $is_sv ? __( 'Rensa alla sparade platser', 'cos-theme' ) : __( 'Clear all saved places', 'cos-theme' ),
+			'clearAllConfirm' => $is_sv ? __( 'Ta bort alla sparade platser?', 'cos-theme' ) : __( 'Remove all saved places?', 'cos-theme' ),
+			'removeItem'      => $is_sv ? __( 'Ta bort från sparade platser', 'cos-theme' ) : __( 'Remove from saved places', 'cos-theme' ),
+			'compareButton'   => $is_sv ? __( 'Jämför', 'cos-theme' ) : __( 'Compare', 'cos-theme' ),
+			'compareHint'     => $is_sv ? __( 'Välj minst 2 platser för att jämföra dem.', 'cos-theme' ) : __( 'Select at least 2 places to compare.', 'cos-theme' ),
+			'compareMax'      => $is_sv ? __( 'Du kan jämföra upp till 3 platser åt gången.', 'cos-theme' ) : __( 'You can compare up to 3 places at a time.', 'cos-theme' ),
+			'clearSelection'  => $is_sv ? __( 'Rensa', 'cos-theme' ) : __( 'Clear', 'cos-theme' ),
+			'closeComparison' => $is_sv ? __( 'Stäng jämförelsen', 'cos-theme' ) : __( 'Close comparison', 'cos-theme' ),
+			'selectedCount'   => $is_sv ? __( '%d valda', 'cos-theme' ) : __( '%d selected', 'cos-theme' ),
+			'compareFields'   => array(
+				'region'        => $is_sv ? __( 'Region', 'cos-theme' ) : __( 'Region', 'cos-theme' ),
+				'buildingType'  => $is_sv ? __( 'Byggnadstyp', 'cos-theme' ) : __( 'Building Type', 'cos-theme' ),
+				'style'         => $is_sv ? __( 'Arkitektonisk stil', 'cos-theme' ) : __( 'Architectural Style', 'cos-theme' ),
+				'era'           => $is_sv ? __( 'Epok', 'cos-theme' ) : __( 'Era', 'cos-theme' ),
+				'yearBuilt'     => $is_sv ? __( 'Byggår', 'cos-theme' ) : __( 'Year Built', 'cos-theme' ),
+				'admission'     => $is_sv ? __( 'Inträde', 'cos-theme' ) : __( 'Admission', 'cos-theme' ),
+				'openingHours'  => $is_sv ? __( 'Öppettider', 'cos-theme' ) : __( 'Opening Hours', 'cos-theme' ),
+				'parking'       => $is_sv ? __( 'Parkering', 'cos-theme' ) : __( 'Parking', 'cos-theme' ),
+				'accessibility' => $is_sv ? __( 'Tillgänglighet', 'cos-theme' ) : __( 'Accessibility', 'cos-theme' ),
+				'guidedTours'   => $is_sv ? __( 'Guidade turer', 'cos-theme' ) : __( 'Guided Tours', 'cos-theme' ),
+			),
 		),
 	) );
 }

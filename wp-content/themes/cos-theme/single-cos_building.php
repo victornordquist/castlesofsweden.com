@@ -33,7 +33,6 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 	$parking         = get_post_meta( $post_id, 'cos_parking', true );
 	$accessibility   = get_post_meta( $post_id, 'cos_accessibility', true );
 	$guided_tours    = get_post_meta( $post_id, 'cos_guided_tours', true );
-	$related_raw     = get_post_meta( $post_id, 'cos_related_buildings', true );
 	$gallery_ids     = array_filter( (array) get_post_meta( $post_id, 'cos_building_gallery', true ) );
 
 	$has_visitor_info = $opening_hours || $admission || $parking || $accessibility || $guided_tours
@@ -41,13 +40,9 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 		|| ( ! is_wp_error( $activities ) && $activities )
 		|| ( ! is_wp_error( $features ) && $features );
 
-	$related_posts = array();
-	foreach ( array_filter( array_map( 'trim', explode( ',', $related_raw ) ) ) as $related_slug ) {
-		$related_post = get_page_by_path( $related_slug, OBJECT, 'cos_building' );
-		if ( $related_post ) {
-			$related_posts[] = $related_post;
-		}
-	}
+	$nearby_ids = ( $lat && $lng )
+		? COS_Building_Proximity::get_nearby( $post_id, $lat, $lng, get_post_meta( $post_id, 'cos_lang', true ) ?: 'en', 3 )
+		: array();
 
 	$thumbnail_url      = get_the_post_thumbnail_url( $post_id, 'full' );
 	$marker_thumbnail_url = get_the_post_thumbnail_url( $post_id, 'thumbnail' );
@@ -299,12 +294,12 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 		</div>
 	<?php endif; ?>
 
-	<?php if ( ! empty( $related_posts ) ) : ?>
+	<?php if ( ! empty( $nearby_ids ) ) : ?>
 		<div class="container section">
-			<h2><?php echo esc_html( $is_sv ? 'Utforska även dessa destinationer' : 'Also Explore These Destinations' ); ?></h2>
+			<h2><?php echo esc_html( $is_sv ? 'Närliggande destinationer' : 'Nearby Destinations' ); ?></h2>
 			<div class="card-grid">
-				<?php foreach ( $related_posts as $related_post ) : ?>
-					<?php cos_building_card( $related_post->ID ); ?>
+				<?php foreach ( $nearby_ids as $nearby_id ) : ?>
+					<?php cos_building_card( $nearby_id ); ?>
 				<?php endforeach; ?>
 			</div>
 		</div>
