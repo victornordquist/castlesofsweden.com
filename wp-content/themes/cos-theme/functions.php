@@ -144,6 +144,12 @@ function cos_social_share_meta() {
 		}
 	}
 
+	if ( is_singular() && 'cos_building' === get_post_type() && COS_Share_Image_Generator::exists( get_the_ID() ) ) {
+		$image_url    = COS_Share_Image_Generator::get_url( get_the_ID() );
+		$image_width  = 1200;
+		$image_height = 630;
+	}
+
 	$current_url = home_url( wp_unslash( $_SERVER['REQUEST_URI'] ) );
 	?>
 	<meta property="og:type" content="<?php echo esc_attr( $type ); ?>">
