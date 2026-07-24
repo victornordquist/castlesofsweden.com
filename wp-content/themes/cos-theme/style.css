@@ -457,6 +457,26 @@ input[type="submit"]:hover {
 }
 .save-card__checkbox input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.saved-places__loading {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 48px 0;
+	color: var(--color-text-muted);
+}
+.saved-places__spinner {
+	width: 22px;
+	height: 22px;
+	border: 3px solid var(--color-beige);
+	border-top-color: var(--color-accent);
+	border-radius: 50%;
+	animation: cos-spin 0.8s linear infinite;
+	flex-shrink: 0;
+}
+@keyframes cos-spin {
+	to { transform: rotate(360deg); }
+}
+
 .compare-bar {
 	position: fixed;
 	left: 0;
@@ -562,6 +582,16 @@ input[type="submit"]:hover {
 .trip-planner__move:hover { background: var(--color-accent-dark); color: #fff; }
 .trip-planner__move:disabled { opacity: 0.35; cursor: not-allowed; }
 .trip-planner__move:disabled:hover { background: var(--color-beige); color: var(--color-text); }
+.trip-planner__remove {
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	background: var(--color-beige);
+	color: var(--color-text-muted);
+	font-size: 1.1rem;
+	line-height: 1;
+}
+.trip-planner__remove:hover { background: #fff; color: #b3261e; }
 .trip-planner__leg {
 	padding: 4px 0 4px 16px;
 	color: var(--color-text-muted);
