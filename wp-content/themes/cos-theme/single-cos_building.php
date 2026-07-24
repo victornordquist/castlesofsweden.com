@@ -61,7 +61,17 @@ $is_sv = 'sv' === COS_Language_Routing::current_lang();
 
 	if ( $thumbnail_url ) {
 		$structured_data['image'] = $image_credit
-			? array( '@type' => 'ImageObject', 'url' => $thumbnail_url, 'creditText' => $image_credit )
+			? array(
+				'@type'      => 'ImageObject',
+				'url'        => $thumbnail_url,
+				'creditText' => $image_credit,
+				// Only the creator is populated here, not copyrightNotice/license/
+				// acquireLicensePage — these photos are almost entirely credited to
+				// individual Wikimedia Commons photographers under whatever license
+				// they published under, not owned by this site, so asserting a
+				// copyright/license we don't hold would be inaccurate.
+				'creator'    => array( '@type' => 'Person', 'name' => $image_credit ),
+			)
 			: $thumbnail_url;
 	}
 
