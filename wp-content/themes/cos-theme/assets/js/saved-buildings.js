@@ -51,6 +51,10 @@
 
 	updateNavBadge();
 
+	function renderLoading( container, text ) {
+		container.innerHTML = '<div class="saved-places__loading"><span class="saved-places__spinner" aria-hidden="true"></span>' + text + '</div>';
+	}
+
 	/**
 	 * Reflects one button's saved/unsaved state into its class, label text
 	 * and aria-pressed. Pulled out of the click handler so it can also run
@@ -150,7 +154,8 @@
 			{ field: 'cos_region', endpoint: data.regionsEndpoint, key: 'region' },
 			{ field: 'cos_building_type', endpoint: data.buildingTypesEndpoint, key: 'buildingType' },
 			{ field: 'cos_architectural_style', endpoint: data.stylesEndpoint, key: 'style' },
-			{ field: 'cos_era', endpoint: data.erasEndpoint, key: 'era' }
+			{ field: 'cos_era', endpoint: data.erasEndpoint, key: 'era' },
+			{ field: 'cos_category', endpoint: data.categoriesEndpoint, key: 'categories' }
 		];
 
 		var lookups = taxonomyConfigs.map( function ( config ) {
@@ -182,7 +187,8 @@
 				region: results[ 0 ],
 				buildingType: results[ 1 ],
 				style: results[ 2 ],
-				era: results[ 3 ]
+				era: results[ 3 ],
+				categories: results[ 4 ]
 			};
 		} );
 	}
@@ -193,6 +199,8 @@
 			container.textContent = data.labels.empty;
 			return;
 		}
+
+		renderLoading( container, data.labels.loading );
 
 		// Deliberately no `_fields` restriction: WP's `_fields` filter is
 		// applied after `_embed` resolves related data, so trimming fields
@@ -226,6 +234,8 @@
 	function renderSharedTrip( container, ids, data ) {
 		var url = data.buildingsEndpoint + '?include=' + ids.join( ',' ) +
 			'&orderby=include&per_page=100&_embed=wp:featuredmedia';
+
+		renderLoading( container, data.labels.loading );
 
 		fetch( url )
 			.then( function ( response ) { return response.ok ? response.json() : []; } )
@@ -287,6 +297,7 @@
 			lat: postMeta.cos_lat ? parseFloat( postMeta.cos_lat ) : null,
 			lng: postMeta.cos_lng ? parseFloat( postMeta.cos_lng ) : null,
 			region: termNames( building.cos_region, names.region ),
+			categories: termNames( building.cos_category, names.categories ),
 			buildingType: termNames( building.cos_building_type, names.buildingType ),
 			style: termNames( building.cos_architectural_style, names.style ),
 			era: termNames( building.cos_era, names.era ),
@@ -431,7 +442,7 @@
 
 		function handleReorder( newIds ) {
 			setSavedIds( newIds );
-			renderTripPlanner( tripSection, newIds, buildingsById, labels, { onReorder: handleReorder } );
+			renderTripPlanner( tripSection, newIds, buildingsById, labels, { onReorder: handleReorder, onRemove: removeCard } );
 		}
 
 		function updateToolbar() {
@@ -477,7 +488,7 @@
 
 			updateToolbar();
 			updateCompareBar();
-			renderTripPlanner( tripSection, getSavedIds(), buildingsById, labels, { onReorder: handleReorder } );
+			renderTripPlanner( tripSection, getSavedIds(), buildingsById, labels, { onReorder: handleReorder, onRemove: removeCard } );
 		}
 
 		container.addEventListener( 'click', function ( event ) {
@@ -542,7 +553,7 @@
 		} );
 
 		updateToolbar();
-		renderTripPlanner( tripSection, getSavedIds(), buildingsById, labels, { onReorder: handleReorder } );
+		renderTripPlanner( tripSection, getSavedIds(), buildingsById, labels, { onReorder: handleReorder, onRemove: removeCard } );
 	}
 
 	function haversineKm( lat1, lng1, lat2, lng2 ) {
@@ -740,6 +751,16 @@
 
 				li.appendChild( upBtn );
 				li.appendChild( downBtn );
+
+				var removeBtn = document.createElement( 'button' );
+				removeBtn.type = 'button';
+				removeBtn.className = 'trip-planner__remove';
+				removeBtn.setAttribute( 'data-remove-stop-id', stop.id );
+				// Same action as the grid's remove button (unsaves the building
+				// entirely, not just its position in the trip) — reuse its label.
+				removeBtn.setAttribute( 'aria-label', labels.removeItem );
+				removeBtn.innerHTML = '&times;';
+				li.appendChild( removeBtn );
 			}
 
 			list.appendChild( li );
@@ -843,6 +864,12 @@
 
 		if ( ! options.readOnly ) {
 			list.addEventListener( 'click', function ( event ) {
+				var removeBtn = event.target.closest && event.target.closest( '[data-remove-stop-id]' );
+				if ( removeBtn && options.onRemove ) {
+					options.onRemove( parseInt( removeBtn.getAttribute( 'data-remove-stop-id' ), 10 ) );
+					return;
+				}
+
 				var btn = event.target.closest && event.target.closest( '[data-move]' );
 				if ( ! btn || btn.disabled ) {
 					return;
@@ -891,10 +918,7 @@
 	function renderComparisonTable( section, ids, buildingsById, labels ) {
 		var fields = [
 			[ 'region', labels.compareFields.region ],
-			[ 'buildingType', labels.compareFields.buildingType ],
-			[ 'style', labels.compareFields.style ],
-			[ 'era', labels.compareFields.era ],
-			[ 'yearBuilt', labels.compareFields.yearBuilt ],
+			[ 'categories', labels.compareFields.categories ],
 			[ 'admission', labels.compareFields.admission ],
 			[ 'openingHours', labels.compareFields.openingHours ],
 			[ 'parking', labels.compareFields.parking ],
