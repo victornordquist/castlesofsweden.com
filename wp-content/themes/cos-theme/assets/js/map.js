@@ -48,6 +48,14 @@ document.addEventListener( 'DOMContentLoaded', function () {
 	var markerGroup = L.layerGroup();
 	map.addLayer( markerGroup );
 
+	// Leaflet only builds a popup's DOM when it opens, so the save button
+	// inside it can't be synced to the current saved state until then.
+	map.on( 'popupopen', function ( e ) {
+		if ( window.cosSyncSaveButtons ) {
+			window.cosSyncSaveButtons( e.popup.getElement() );
+		}
+	} );
+
 	var allBuildings = [];
 	var filterKeys = [ 'region', 'type', 'category', 'activity', 'feature', 'style', 'era' ];
 	// These render/behave as checkbox groups (multi-select, AND-matched) rather
@@ -220,12 +228,17 @@ document.addEventListener( 'DOMContentLoaded', function () {
 			matchedCoords.push( [ building.lat, building.lng ] );
 
 			var marker = L.marker( [ building.lat, building.lng ], { icon: photoMarkerIcon( building.thumbnail ) } );
-			var popupHtml = '';
+			var popupHtml = '<div class="cos-map-popup">';
 			if ( building.thumbnail ) {
 				popupHtml += '<img src="' + building.thumbnail + '" alt="" style="width:100%;margin-bottom:6px;">';
 			}
-			popupHtml += '<strong>' + building.name + '</strong><br>';
+			popupHtml += '<strong>' + building.name + '</strong>';
+			popupHtml += '<div class="cos-map-popup__actions">';
 			popupHtml += '<a href="' + building.permalink + '">' + cosMapData.viewDetailsLabel + '</a>';
+			if ( window.cosBuildSaveButtonHtml ) {
+				popupHtml += window.cosBuildSaveButtonHtml( building.id, 'save-building-button--popup' );
+			}
+			popupHtml += '</div></div>';
 			marker.bindPopup( popupHtml );
 			markerGroup.addLayer( marker );
 		} );

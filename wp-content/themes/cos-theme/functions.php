@@ -323,7 +323,7 @@ function cos_enqueue_assets() {
 	}
 
 	if ( $is_map_page ) {
-		wp_enqueue_script( 'cos-map', COS_THEME_URI . '/assets/js/map.js', array( 'leaflet' ), cos_asset_version( '/assets/js/map.js' ), true );
+		wp_enqueue_script( 'cos-map', COS_THEME_URI . '/assets/js/map.js', array( 'leaflet', 'cos-saved-buildings' ), cos_asset_version( '/assets/js/map.js' ), true );
 
 		$map_regions     = get_terms( array( 'taxonomy' => 'cos_region', 'hide_empty' => false ) );
 		$map_categories  = get_terms( array( 'taxonomy' => 'cos_category', 'hide_empty' => false ) );
@@ -354,7 +354,7 @@ function cos_enqueue_assets() {
 	}
 
 	if ( $is_term_page ) {
-		wp_enqueue_script( 'cos-term-map', COS_THEME_URI . '/assets/js/term-map.js', array( 'leaflet' ), cos_asset_version( '/assets/js/term-map.js' ), true );
+		wp_enqueue_script( 'cos-term-map', COS_THEME_URI . '/assets/js/term-map.js', array( 'leaflet', 'cos-saved-buildings' ), cos_asset_version( '/assets/js/term-map.js' ), true );
 
 		wp_localize_script( 'cos-term-map', 'cosTermMapData', array(
 			'endpoint'         => esc_url_raw( add_query_arg( 'lang', $is_sv ? 'sv' : 'en', rest_url( 'cos-core/v1/map-data' ) ) ),
@@ -390,7 +390,8 @@ function cos_enqueue_assets() {
 	}
 
 	// Sitewide: every page has the nav search trigger (and its overlay), not just /search/ and the homepage hero.
-	wp_enqueue_script( 'cos-search', COS_THEME_URI . '/assets/js/search.js', array(), cos_asset_version( '/assets/js/search.js' ), true );
+	// Depends on cos-saved-buildings for the save button it renders into destination results (window.cosBuildSaveButtonHtml/cosSyncSaveButtons).
+	wp_enqueue_script( 'cos-search', COS_THEME_URI . '/assets/js/search.js', array( 'cos-saved-buildings' ), cos_asset_version( '/assets/js/search.js' ), true );
 
 	wp_localize_script( 'cos-search', 'cosSearchData', array(
 		'endpoint'      => esc_url_raw( add_query_arg( 'lang', $is_sv ? 'sv' : 'en', rest_url( 'cos-core/v1/search' ) ) ),
@@ -436,6 +437,8 @@ function cos_enqueue_assets() {
 		'erasEndpoint'          => esc_url_raw( rest_url( 'wp/v2/cos_era' ) ),
 		'lang'                  => $is_sv ? 'sv' : 'en',
 		'labels'                => array(
+			'saveLabel'       => $is_sv ? __( 'Spara', 'cos-theme' ) : __( 'Save', 'cos-theme' ),
+			'savedLabel'      => $is_sv ? __( 'Sparad', 'cos-theme' ) : __( 'Saved', 'cos-theme' ),
 			'empty'           => $is_sv ? __( 'Du har inte sparat några platser än.', 'cos-theme' ) : __( 'You haven\'t saved any places yet.', 'cos-theme' ),
 			'savedCount'      => $is_sv ? __( '%d sparade', 'cos-theme' ) : __( '%d saved', 'cos-theme' ),
 			'clearAll'        => $is_sv ? __( 'Rensa alla sparade platser', 'cos-theme' ) : __( 'Clear all saved places', 'cos-theme' ),

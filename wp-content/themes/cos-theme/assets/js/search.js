@@ -154,6 +154,10 @@ document.addEventListener( 'DOMContentLoaded', function () {
 				escapeHtml( cosSearchData.labels.viewAll.replace( '%s', query ) ) + '</a></p>';
 
 			resultsEl.innerHTML = html;
+
+			if ( window.cosSyncSaveButtons ) {
+				window.cosSyncSaveButtons( resultsEl );
+			}
 		}
 
 		function renderItem( groupKey, item ) {
@@ -167,8 +171,9 @@ document.addEventListener( 'DOMContentLoaded', function () {
 
 			if ( 'destinations' === groupKey ) {
 				var meta = item.region ? escapeHtml( item.region ) : '';
-				return '<li><a href="' + permalink + '">' + thumb + '<span>' + escapeHtml( item.title ) +
-					'<span class="cos-search__meta">' + meta + '</span></span></a></li>';
+				var saveBtn = window.cosBuildSaveButtonHtml ? window.cosBuildSaveButtonHtml( item.id, 'save-building-button--search' ) : '';
+				return '<li class="cos-search__item"><a href="' + permalink + '">' + thumb + '<span>' + escapeHtml( item.title ) +
+					'<span class="cos-search__meta">' + meta + '</span></span></a>' + saveBtn + '</li>';
 			}
 
 			return '<li><a href="' + permalink + '">' + thumb + '<span>' + escapeHtml( item.title ) + '</span></a></li>';
