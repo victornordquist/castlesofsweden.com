@@ -786,6 +786,11 @@ input[type="submit"]:hover {
 
 @media (max-width: 600px) {
 	.page-title-bar--image { min-height: 320px; }
+	.page-title-bar__actions { gap: 8px; }
+	.page-title-bar__actions .button {
+		padding: 0.6em 1.2em;
+		font-size: 0.78rem;
+	}
 }
 .page-title-bar .page-title-bar__credit {
 	position: absolute;
