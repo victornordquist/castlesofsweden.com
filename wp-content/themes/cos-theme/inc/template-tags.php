@@ -53,21 +53,41 @@ function cos_card( $permalink, $title, $thumbnail_url, $meta = '' ) {
 
 /**
  * Renders a single building card. Expects $post to be set up (in the loop or via setup_postdata).
+ *
+ * The save button is a sibling of the `.card` link, not nested inside it —
+ * matching the pattern already used for the compare checkbox/remove button on
+ * the Saved Places cards (see buildSaveCard() in saved-buildings.js) — since
+ * interactive controls aren't valid nested inside an `<a>`.
  */
 function cos_building_card( $post_id ) {
 	$region = get_the_terms( $post_id, 'cos_region' );
+	$is_sv  = 'sv' === COS_Language_Routing::current_lang();
 	?>
-	<a class="card" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
-		<div class="card__image">
-			<?php echo get_the_post_thumbnail( $post_id, 'medium', array( 'alt' => get_the_title( $post_id ) ) ); ?>
-		</div>
-		<div class="card__body">
-			<h3 class="card__title"><?php echo esc_html( get_the_title( $post_id ) ); ?></h3>
-			<?php if ( ! is_wp_error( $region ) && $region ) : ?>
-				<p class="card__meta"><?php echo esc_html( implode( ', ', wp_list_pluck( $region, 'name' ) ) ); ?></p>
-			<?php endif; ?>
-		</div>
-	</a>
+	<div class="building-card">
+		<button
+			type="button"
+			class="save-building-button save-building-button--card"
+			data-save-building-id="<?php echo esc_attr( $post_id ); ?>"
+			data-label-save="<?php echo esc_attr( $is_sv ? 'Spara' : 'Save' ); ?>"
+			data-label-saved="<?php echo esc_attr( $is_sv ? 'Sparad' : 'Saved' ); ?>"
+		>
+			<svg class="save-building-button__icon" width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+				<path d="M9 15.5 2.6 9.2C0.9 7.5 0.9 4.8 2.6 3.1c1.7-1.7 4.4-1.7 6.1 0L9 3.4l0.3-0.3c1.7-1.7 4.4-1.7 6.1 0 1.7 1.7 1.7 4.4 0 6.1L9 15.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+			</svg>
+			<span class="save-building-button__label sr-only"><?php echo esc_html( $is_sv ? 'Spara' : 'Save' ); ?></span>
+		</button>
+		<a class="card" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
+			<div class="card__image">
+				<?php echo get_the_post_thumbnail( $post_id, 'medium', array( 'alt' => get_the_title( $post_id ) ) ); ?>
+			</div>
+			<div class="card__body">
+				<h3 class="card__title"><?php echo esc_html( get_the_title( $post_id ) ); ?></h3>
+				<?php if ( ! is_wp_error( $region ) && $region ) : ?>
+					<p class="card__meta"><?php echo esc_html( implode( ', ', wp_list_pluck( $region, 'name' ) ) ); ?></p>
+				<?php endif; ?>
+			</div>
+		</a>
+	</div>
 	<?php
 }
 

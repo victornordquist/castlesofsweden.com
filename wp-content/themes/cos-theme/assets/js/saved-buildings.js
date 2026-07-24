@@ -51,30 +51,84 @@
 
 	updateNavBadge();
 
-	document.addEventListener( 'DOMContentLoaded', function () {
-		var button = document.querySelector( '.save-building-button' );
-		if ( button ) {
-			var id    = parseInt( button.getAttribute( 'data-save-building-id' ), 10 );
-			var label = button.querySelector( '.save-building-button__label' );
-
-			var render = function () {
-				var saved = isSaved( id );
-				var text  = saved ? button.getAttribute( 'data-label-saved' ) : button.getAttribute( 'data-label-save' );
-				if ( label ) {
-					label.textContent = text;
-				} else {
-					button.textContent = text;
-				}
-				button.classList.toggle( 'is-saved', saved );
-			};
-			render();
-
-			button.addEventListener( 'click', function () {
-				toggleSaved( id );
-				render();
-				updateNavBadge();
-			} );
+	/**
+	 * Reflects one button's saved/unsaved state into its class, label text
+	 * and aria-pressed. Pulled out of the click handler so it can also run
+	 * on buttons that didn't exist yet at DOMContentLoaded — the ones the
+	 * search dropdown and map popups inject later, via cosSyncSaveButtons().
+	 */
+	function syncSaveButton( button ) {
+		var id    = parseInt( button.getAttribute( 'data-save-building-id' ), 10 );
+		var saved = isSaved( id );
+		var label = button.querySelector( '.save-building-button__label' );
+		var text  = saved ? button.getAttribute( 'data-label-saved' ) : button.getAttribute( 'data-label-save' );
+		if ( label ) {
+			label.textContent = text;
+		} else {
+			button.textContent = text;
 		}
+		button.classList.toggle( 'is-saved', saved );
+		button.setAttribute( 'aria-pressed', String( saved ) );
+	}
+
+	/**
+	 * Syncs every `.save-building-button` under `root` (default: the whole
+	 * document). Exposed on window so other scripts that inject buttons into
+	 * dynamic markup (search-dropdown results, map popups) can call it right
+	 * after inserting that markup, without this file needing to know about
+	 * any of those call sites.
+	 */
+	function syncSaveButtons( root ) {
+		( root || document ).querySelectorAll( '.save-building-button' ).forEach( syncSaveButton );
+	}
+	window.cosSyncSaveButtons = syncSaveButtons;
+
+	/**
+	 * Builds a save button's HTML for scripts that render markup as strings
+	 * (search.js, map.js, term-map.js) rather than DOM nodes — keeps the
+	 * button's markup, and the localStorage logic that drives it, in one
+	 * place. Callers must still call cosSyncSaveButtons() on the inserted
+	 * markup so the button reflects the current saved state.
+	 */
+	function buildSaveButtonHtml( id, extraClass ) {
+		var labels     = ( window.cosSavedBuildingsData && window.cosSavedBuildingsData.labels ) || {};
+		var saveLabel  = labels.saveLabel || 'Save';
+		var savedLabel = labels.savedLabel || 'Saved';
+		var cls        = 'save-building-button' + ( extraClass ? ' ' + extraClass : '' );
+		return '<button type="button" class="' + cls + '" data-save-building-id="' + id + '"' +
+			' data-label-save="' + saveLabel + '" data-label-saved="' + savedLabel + '">' +
+			'<svg class="save-building-button__icon" width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">' +
+			'<path d="M9 15.5 2.6 9.2C0.9 7.5 0.9 4.8 2.6 3.1c1.7-1.7 4.4-1.7 6.1 0L9 3.4l0.3-0.3c1.7-1.7 4.4-1.7 6.1 0 1.7 1.7 1.7 4.4 0 6.1L9 15.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>' +
+			'</svg>' +
+			'<span class="save-building-button__label sr-only">' + saveLabel + '</span>' +
+			'</button>';
+	}
+	window.cosBuildSaveButtonHtml = buildSaveButtonHtml;
+
+	// Delegated on document, not per-button: a page can carry many save
+	// buttons at once (every card in a listing grid, the single-page hero,
+	// search-dropdown results, map popups), and some are injected long after
+	// DOMContentLoaded — delegation covers all of them with one listener.
+	document.addEventListener( 'click', function ( event ) {
+		var button = event.target.closest && event.target.closest( '.save-building-button' );
+		if ( ! button ) {
+			return;
+		}
+		// Save buttons sit next to (not inside) any card/popup link, but this
+		// still guards against the click reaching one.
+		event.preventDefault();
+		event.stopPropagation();
+
+		var id = parseInt( button.getAttribute( 'data-save-building-id' ), 10 );
+		toggleSaved( id );
+		updateNavBadge();
+		// The same building can appear in more than one place at once (e.g. a
+		// card and a map popup) — keep every instance of its button in sync.
+		document.querySelectorAll( '.save-building-button[data-save-building-id="' + id + '"]' ).forEach( syncSaveButton );
+	} );
+
+	document.addEventListener( 'DOMContentLoaded', function () {
+		syncSaveButtons( document );
 
 		var container = document.getElementById( 'cos-saved-places' );
 		if ( container && window.cosSavedBuildingsData ) {
