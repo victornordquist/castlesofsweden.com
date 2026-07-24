@@ -81,6 +81,16 @@ class COS_Newsletter {
 			);
 		}
 
+		// Local storage above is kept as a resilience backup regardless of
+		// what happens here — a Mailchimp failure never blocks the signup or
+		// changes the visitor-facing redirect below.
+		if ( COS_Mailchimp::is_configured() ) {
+			$result = COS_Mailchimp::subscribe( $email );
+			if ( is_wp_error( $result ) ) {
+				error_log( 'COS_Mailchimp: ' . $result->get_error_message() );
+			}
+		}
+
 		wp_safe_redirect( add_query_arg( 'cos_subscribe', 'success', $redirect ) );
 		exit;
 	}
